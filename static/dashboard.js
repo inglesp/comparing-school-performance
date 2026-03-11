@@ -152,9 +152,21 @@
             return;
         }
 
-        const matches = allSchools
+        var urnQuery = parseInt(query, 10);
+        var isUrnSearch = String(urnQuery) === query;
+
+        var matches = allSchools
             .filter(function (s) {
-                return s.name.toLowerCase().includes(query) && !selectedUrns.has(s.urn);
+                if (selectedUrns.has(s.urn)) return false;
+                if (isUrnSearch) return s.urn === urnQuery;
+                return s.name.toLowerCase().includes(query);
+            })
+            .sort(function (a, b) {
+                if (isUrnSearch) return 0;
+                var aStarts = a.name.toLowerCase().startsWith(query) ? 0 : 1;
+                var bStarts = b.name.toLowerCase().startsWith(query) ? 0 : 1;
+                if (aStarts !== bStarts) return aStarts - bStarts;
+                return a.name.localeCompare(b.name);
             })
             .slice(0, 15);
 
