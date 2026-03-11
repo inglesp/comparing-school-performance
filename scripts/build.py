@@ -231,12 +231,12 @@ def build_html(filter_options):
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Primary School Performance Dashboard 2024-25</title>
+    <title>Primary School Performance and Demographics Dashboard 2024-25</title>
     <link rel="stylesheet" href="style.css">
     <script defer data-domain="inglesp.github.io" src="https://plausible.io/js/script.js"></script>
 </head>
 <body>
-    <h1>Primary School Performance 2024-25 <button id="help-btn" class="help-btn" aria-label="Help">?</button></h1>
+    <h1>Primary School Performance and Demographics 2024-25 <button id="help-btn" class="help-btn" aria-label="Help">?</button></h1>
 
     <p class="subtitle">Data from the DfE's <a href="https://www.compare-school-performance.service.gov.uk/" target="_blank" rel="noopener">compare school performance</a> service for 2024-25. Covers state-funded primary schools in England with KS2 results.</p>
 
