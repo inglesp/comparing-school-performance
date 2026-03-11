@@ -245,6 +245,7 @@ def build_html(filter_options):
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Primary School Performance Dashboard 2024-25</title>
     <link rel="stylesheet" href="style.css">
+    <script defer data-domain="inglesp.github.io" src="https://plausible.io/js/script.js"></script>
 </head>
 <body>
     <h1>Primary School Performance 2024-25 <button id="help-btn" class="help-btn" aria-label="Help">?</button></h1>
