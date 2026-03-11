@@ -67,9 +67,9 @@
 
         document.getElementById("x-axis").addEventListener("change", onControlChange);
         document.getElementById("y-axis").addEventListener("change", onControlChange);
-        document.getElementById("filter-la").addEventListener("change", onControlChange);
-        document.getElementById("filter-type").addEventListener("change", onControlChange);
-        document.getElementById("filter-religion").addEventListener("change", onControlChange);
+        document.getElementById("add-filter").addEventListener("click", function () {
+            addFilterRow("", "", "");
+        });
 
         searchInput.addEventListener("input", onSearchInput);
         searchInput.addEventListener("keydown", onSearchKeydown);
@@ -107,9 +107,16 @@
         var params = new URLSearchParams(window.location.search);
         if (params.has("x")) setSelectValue("x-axis", params.get("x"));
         if (params.has("y")) setSelectValue("y-axis", params.get("y"));
-        if (params.has("la")) setSelectValue("filter-la", params.get("la"));
-        if (params.has("type")) setSelectValue("filter-type", params.get("type"));
-        if (params.has("religion")) setSelectValue("filter-religion", params.get("religion"));
+        if (params.has("f")) {
+            params.get("f").split(",").forEach(function (pair) {
+                var sep = pair.indexOf(":");
+                if (sep > 0) addFilterRow(pair.slice(0, sep), pair.slice(sep + 1));
+            });
+        }
+        // Legacy params
+        if (params.has("la")) addFilterRow("la", params.get("la"));
+        if (params.has("type")) addFilterRow("type", params.get("type"));
+        if (params.has("religion")) addFilterRow("religion", params.get("religion"));
 
         selectedUrns = new Set();
         if (params.has("schools")) {
@@ -136,15 +143,17 @@
         var params = new URLSearchParams();
         var x = document.getElementById("x-axis").value;
         var y = document.getElementById("y-axis").value;
-        var la = document.getElementById("filter-la").value;
-        var type = document.getElementById("filter-type").value;
-        var religion = document.getElementById("filter-religion").value;
+
+        var filters = getFilters();
 
         if (x !== "pct_fsm_ever") params.set("x", x);
         if (y !== "pct_rwm_expected") params.set("y", y);
-        if (la) params.set("la", la);
-        if (type) params.set("type", type);
-        if (religion) params.set("religion", religion);
+
+        if (filters.length > 0) {
+            params.set("f", filters.map(function (f) {
+                return f.key + ":" + f.value;
+            }).join(","));
+        }
         if (selectedUrns.size > 0) {
             params.set("schools", Array.from(selectedUrns).join(","));
         }
@@ -152,6 +161,122 @@
         var qs = params.toString();
         var url = window.location.pathname + (qs ? "?" + qs : "");
         history.replaceState(null, "", url);
+    }
+
+    // --- Dynamic filters ---
+
+    var FILTER_CATEGORIES = [
+        { key: "la", label: "Local authority", type: "select", options: FILTER_OPTIONS.la_names, schoolKey: "la_name" },
+        { key: "type", label: "School type", type: "select", options: FILTER_OPTIONS.school_types, schoolKey: "school_type" },
+        { key: "religion", label: "Religious character", type: "select", options: FILTER_OPTIONS.religious_characters, schoolKey: "religious_character" },
+    ];
+
+    // Add a "min ..." entry for each demographic field
+    for (var di = 0; di < DEMOGRAPHIC_FIELDS.length; di++) {
+        var df = DEMOGRAPHIC_FIELDS[di];
+        FILTER_CATEGORIES.push({
+            key: df,
+            label: "Min " + FIELD_LABELS[df],
+            type: "percentile",
+            schoolKey: df,
+        });
+    }
+
+    function addFilterRow(categoryKey, value) {
+        var container = document.getElementById("filter-rows");
+        var row = document.createElement("div");
+        row.className = "filter-row";
+
+        // Category select
+        var catSelect = document.createElement("select");
+        catSelect.className = "filter-cat-select";
+        catSelect.innerHTML = '<option value="">Choose...</option>';
+        for (var i = 0; i < FILTER_CATEGORIES.length; i++) {
+            var cat = FILTER_CATEGORIES[i];
+            var opt = document.createElement("option");
+            opt.value = cat.key;
+            opt.textContent = cat.label;
+            if (cat.key === categoryKey) opt.selected = true;
+            catSelect.appendChild(opt);
+        }
+
+        var valueContainer = document.createElement("span");
+        valueContainer.className = "filter-value-container";
+
+        function buildValueControl() {
+            valueContainer.innerHTML = "";
+            var selectedCat = catSelect.value;
+            var catDef = FILTER_CATEGORIES.find(function (c) { return c.key === selectedCat; });
+            if (!catDef) return;
+
+            if (catDef.type === "select") {
+                var valSelect = document.createElement("select");
+                valSelect.innerHTML = '<option value="">All</option>';
+                for (var j = 0; j < catDef.options.length; j++) {
+                    var o = document.createElement("option");
+                    o.value = catDef.options[j];
+                    o.textContent = catDef.options[j];
+                    if (catDef.options[j] === value) o.selected = true;
+                    valSelect.appendChild(o);
+                }
+                valSelect.addEventListener("change", onControlChange);
+                valueContainer.appendChild(valSelect);
+            } else if (catDef.type === "percentile") {
+                var input = document.createElement("input");
+                input.type = "number";
+                input.min = "0";
+                input.max = "100";
+                input.placeholder = "0";
+                input.className = "pct-input";
+                if (value) input.value = value;
+                input.addEventListener("input", onControlChange);
+                valueContainer.appendChild(input);
+            }
+        }
+
+        catSelect.addEventListener("change", function () {
+            buildValueControl();
+            onControlChange();
+        });
+
+        var removeBtn = document.createElement("button");
+        removeBtn.type = "button";
+        removeBtn.className = "filter-remove";
+        removeBtn.textContent = "\u00d7";
+        removeBtn.addEventListener("click", function () {
+            row.remove();
+            onControlChange();
+        });
+
+        row.appendChild(catSelect);
+        row.appendChild(valueContainer);
+        row.appendChild(removeBtn);
+        container.appendChild(row);
+
+        if (categoryKey) buildValueControl();
+    }
+
+    function getFilters() {
+        var rows = document.querySelectorAll(".filter-row");
+        var filters = [];
+        for (var i = 0; i < rows.length; i++) {
+            var catKey = rows[i].querySelector(".filter-cat-select").value;
+            var catDef = FILTER_CATEGORIES.find(function (c) { return c.key === catKey; });
+            if (!catDef) continue;
+
+            if (catDef.type === "select") {
+                var selects = rows[i].querySelectorAll(".filter-value-container select");
+                var val = selects.length ? selects[0].value : "";
+                if (val) filters.push({ type: "match", key: catDef.key, schoolKey: catDef.schoolKey, value: val });
+            } else if (catDef.type === "percentile") {
+                var inputs = rows[i].querySelectorAll(".filter-value-container input");
+                var pctVal = inputs.length ? parseInt(inputs[0].value, 10) : NaN;
+                if (!isNaN(pctVal) && pctVal > 0) {
+                    filters.push({ type: "percentile", key: catDef.key, schoolKey: catDef.schoolKey, value: pctVal });
+                }
+            }
+        }
+        return filters;
     }
 
     // --- Search and selection ---
@@ -433,19 +558,39 @@
         onControlChange();
     }
 
+    function percentileThreshold(key, pct) {
+        var vals = allSchools
+            .map(function (s) { return s[key]; })
+            .filter(function (v) { return v != null; })
+            .sort(function (a, b) { return a - b; });
+        if (vals.length === 0) return -Infinity;
+        var idx = Math.round((pct / 100) * (vals.length - 1));
+        return vals[idx];
+    }
+
     function onControlChange() {
         xField = document.getElementById("x-axis").value;
         yField = document.getElementById("y-axis").value;
 
-        const filterLA = document.getElementById("filter-la").value;
-        const filterType = document.getElementById("filter-type").value;
-        const filterReligion = document.getElementById("filter-religion").value;
+        var filters = getFilters();
+        var resolvedFilters = filters.map(function (f) {
+            if (f.type === "percentile") {
+                return { type: "percentile", schoolKey: f.schoolKey, threshold: percentileThreshold(f.schoolKey, f.value) };
+            }
+            return f;
+        });
 
         filteredSchools = allSchools.filter(function (s) {
-            if (filterLA && s.la_name !== filterLA) return false;
-            if (filterType && s.school_type !== filterType) return false;
-            if (filterReligion && s.religious_character !== filterReligion) return false;
-            return s[xField] != null && s[yField] != null;
+            if (s[xField] == null || s[yField] == null) return false;
+            for (var i = 0; i < resolvedFilters.length; i++) {
+                var f = resolvedFilters[i];
+                if (f.type === "match") {
+                    if (s[f.schoolKey] !== f.value) return false;
+                } else if (f.type === "percentile") {
+                    if (s[f.schoolKey] == null || s[f.schoolKey] < f.threshold) return false;
+                }
+            }
+            return true;
         });
 
         computeExtents();
@@ -557,10 +702,7 @@
     }
 
     function drawDots() {
-        var filterActive =
-            document.getElementById("filter-la").value ||
-            document.getElementById("filter-type").value ||
-            document.getElementById("filter-religion").value;
+        var filterActive = getFilters().length > 0;
 
         if (filterActive) {
             ctx.fillStyle = "rgba(200, 200, 200, 0.3)";

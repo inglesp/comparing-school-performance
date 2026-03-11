@@ -225,18 +225,6 @@ def build_html(filter_options):
         f"{FIELD_LABELS[f]}</option>\n"
         for f in ATTAINMENT_FIELDS
     )
-    la_options = "".join(
-        f'<option value="{la}">{la}</option>\n'
-        for la in filter_options["la_names"]
-    )
-    type_options = "".join(
-        f'<option value="{t}">{t}</option>\n'
-        for t in filter_options["school_types"]
-    )
-    religion_options = "".join(
-        f'<option value="{r}">{r}</option>\n'
-        for r in filter_options["religious_characters"]
-    )
 
     return f"""<!DOCTYPE html>
 <html lang="en">
@@ -324,27 +312,14 @@ def build_html(filter_options):
                 {y_options}
             </select>
         </div>
-        <div class="control-group">
-            <label for="filter-la">Local authority:</label>
-            <select id="filter-la">
-                <option value="">All</option>
-                {la_options}
-            </select>
+    </div>
+
+    <div class="filters-panel">
+        <div class="filters-header">
+            <label>Filters:</label>
+            <button type="button" id="add-filter" class="add-filter-btn">+ Add filter</button>
         </div>
-        <div class="control-group">
-            <label for="filter-type">School type:</label>
-            <select id="filter-type">
-                <option value="">All</option>
-                {type_options}
-            </select>
-        </div>
-        <div class="control-group">
-            <label for="filter-religion">Religious character:</label>
-            <select id="filter-religion">
-                <option value="">All</option>
-                {religion_options}
-            </select>
-        </div>
+        <div id="filter-rows"></div>
     </div>
 
     <div class="school-search">
@@ -367,6 +342,8 @@ def build_html(filter_options):
 
     <script>
         var FIELD_LABELS = {json.dumps(FIELD_LABELS)};
+        var DEMOGRAPHIC_FIELDS = {json.dumps(DEMOGRAPHIC_FIELDS)};
+        var FILTER_OPTIONS = {json.dumps(filter_options)};
         var DATA_URL = "data.json";
     </script>
     <script src="dashboard.js"></script>
