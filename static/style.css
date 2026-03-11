@@ -516,15 +516,6 @@ canvas {
     z-index: 2;
 }
 
-.selected-table-container thead .rank-row th {
-    border-bottom: 1px solid #eee;
-    font-weight: 400;
-    font-size: 0.7rem;
-    color: #888;
-    padding-top: 0;
-    top: auto;
-}
-
 .selected-table-container .school-name-col {
     text-align: left;
     position: sticky;
@@ -552,12 +543,22 @@ canvas {
     text-align: right;
 }
 
-.selected-table-container .rank-row th,
-.selected-table-container .rank-row td {
-    font-size: 0.7rem;
+.pct-inline {
     color: #888;
-    padding-top: 0;
-    padding-bottom: 0.15rem;
+    font-size: 0.7rem;
+}
+
+.selected-table-container .selected-row th,
+.selected-table-container .selected-row td {
+    background: #fafafa;
+    font-weight: 600;
+}
+
+.table-truncated {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.8rem;
+    color: #888;
+    border-top: 1px solid #eee;
 }
 
 .selected-table-container tbody tr:hover th,

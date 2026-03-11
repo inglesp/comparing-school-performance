@@ -571,28 +571,52 @@
         });
     }
 
+    var TABLE_MAX_ROWS = 500;
+
     function renderSelectedTable() {
         var container = document.getElementById("selected-table-container");
-        if (selectedUrns.size === 0) {
+        var colSelector = document.getElementById("column-selector");
+        var hasFilters = getFilters().length > 0;
+
+        if (!hasFilters && selectedUrns.size === 0) {
             container.innerHTML = "";
-            document.getElementById("column-selector").innerHTML = "";
+            colSelector.innerHTML = "";
             return;
         }
 
-        var selectedList = [];
+        // Build color map for selected schools
+        var selectedColorMap = {};
         var colorIdx = 0;
         for (var urn of selectedUrns) {
-            var school = allSchools.find(function (s) { return s.urn === urn; });
-            if (!school) continue;
-            selectedList.push({
-                school: school,
-                color: SELECTED_COLORS[colorIdx % SELECTED_COLORS.length],
-            });
+            selectedColorMap[urn] = SELECTED_COLORS[colorIdx % SELECTED_COLORS.length];
             colorIdx++;
         }
 
+        // Build school list: filtered schools + any selected schools not already included
+        var schoolList = filteredSchools.slice();
+        var seen = new Set();
+        for (var i = 0; i < filteredSchools.length; i++) {
+            seen.add(filteredSchools[i].urn);
+        }
+        for (var su of selectedUrns) {
+            if (!seen.has(su)) {
+                var school = allSchools.find(function (s) { return s.urn === su; });
+                if (school) schoolList.push(school);
+            }
+        }
+
+        schoolList.sort(function (a, b) {
+            var av = a[xField], bv = b[xField];
+            if (av == null && bv == null) return 0;
+            if (av == null) return 1;
+            if (bv == null) return -1;
+            return bv - av;
+        });
+
+        var truncated = schoolList.length > TABLE_MAX_ROWS;
+        if (truncated) schoolList = schoolList.slice(0, TABLE_MAX_ROWS);
+
         var cols = TABLE_COLUMNS.filter(function (c) { return visibleColumns.has(c.key); });
-        var hasFilters = getFilters().length > 0;
 
         renderColumnSelector();
 
@@ -601,35 +625,32 @@
         for (var c = 0; c < cols.length; c++) {
             html += "<th>" + cols[c].label + "</th>";
         }
-        html += "</tr>";
+        html += "</tr></thead><tbody>";
 
-        // Percentile sub-header if any rank columns visible
-        var hasRankCols = cols.some(function (c) { return c.rank; });
-        if (hasRankCols) {
-            html += "<tr class='rank-row'><th class='school-name-col'></th>";
-            for (var c2 = 0; c2 < cols.length; c2++) {
-                if (cols[c2].rank) {
-                    var pctLabel = hasFilters ? "ntl / flt" : "ntl";
-                    html += "<th>" + pctLabel + "</th>";
-                } else {
-                    html += "<th></th>";
-                }
+        // Pre-build rank lookups for visible rank columns
+        var rankData = {};
+        var filtRankData = {};
+        for (var rc = 0; rc < cols.length; rc++) {
+            if (cols[rc].rank) {
+                rankData[cols[rc].key] = buildRanks(cols[rc].key);
+                if (hasFilters) filtRankData[cols[rc].key] = buildFilteredRanks(cols[rc].key);
             }
-            html += "</tr>";
         }
-        html += "</thead><tbody>";
 
         // One row per school
-        for (var s = 0; s < selectedList.length; s++) {
-            var school = selectedList[s].school;
-            var color = selectedList[s].color;
+        for (var s = 0; s < schoolList.length; s++) {
+            var sch = schoolList[s];
+            var isSelected = selectedColorMap[sch.urn];
 
             // Value row
-            html += "<tr><th class='school-name-col'>" +
-                "<span class='color-dot' style='background:" + color + "'></span>" +
-                school.name + "</th>";
+            html += "<tr" + (isSelected ? " class='selected-row'" : "") + ">";
+            html += "<th class='school-name-col'>";
+            if (isSelected) {
+                html += "<span class='color-dot' style='background:" + isSelected + "'></span>";
+            }
+            html += sch.name + "</th>";
             for (var v = 0; v < cols.length; v++) {
-                var val = school[cols[v].key];
+                var val = sch[cols[v].key];
                 var display;
                 if (val == null) {
                     display = "\u2013";
@@ -638,31 +659,28 @@
                 } else {
                     display = String(val);
                 }
+
+                // Append percentile inline
+                if (cols[v].rank && val != null) {
+                    var pctParts = [];
+                    var nr = rankData[cols[v].key];
+                    if (nr) pctParts.push(formatRank(nr[sch.urn]));
+                    if (hasFilters && filtRankData[cols[v].key]) {
+                        pctParts.push(formatRank(filtRankData[cols[v].key][sch.urn]));
+                    }
+                    display += " <span class='pct-inline'>" + pctParts.join("/") + "</span>";
+                }
+
                 html += "<td>" + display + "</td>";
             }
             html += "</tr>";
-
-            // Percentile row
-            if (hasRankCols) {
-                html += "<tr class='rank-row'><th class='school-name-col'></th>";
-                for (var p = 0; p < cols.length; p++) {
-                    if (cols[p].rank) {
-                        var nationalRanks = buildRanks(cols[p].key);
-                        var cell = formatRank(nationalRanks[school.urn]);
-                        if (hasFilters) {
-                            var filtRanks = buildFilteredRanks(cols[p].key);
-                            cell += " / " + formatRank(filtRanks[school.urn]);
-                        }
-                        html += "<td>" + cell + "</td>";
-                    } else {
-                        html += "<td></td>";
-                    }
-                }
-                html += "</tr>";
-            }
         }
 
         html += "</tbody></table>";
+        if (truncated) {
+            html += "<div class='table-truncated'>Showing first " + TABLE_MAX_ROWS +
+                " of " + seen.size + " schools</div>";
+        }
         container.innerHTML = html;
     }
 
