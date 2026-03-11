@@ -564,11 +564,6 @@
         var colSelector = document.getElementById("column-selector");
         var hasFilters = getFilters().length > 0;
 
-        if (!hasFilters && selectedUrns.size === 0) {
-            container.innerHTML = "";
-            colSelector.innerHTML = "";
-            return;
-        }
 
         // Build color map for selected schools
         var selectedColorMap = {};
