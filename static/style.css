@@ -522,6 +522,14 @@ canvas {
     background: #f0f4ff;
 }
 
+.selected-table-container .rank-col {
+    text-align: right;
+    color: #888;
+    font-size: 0.7rem;
+    padding: 0.35rem 0.3rem;
+    white-space: nowrap;
+}
+
 .selected-table-container .school-name-col {
     text-align: left;
     position: sticky;

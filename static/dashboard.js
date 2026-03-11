@@ -608,7 +608,7 @@
 
         // Header
         var nameArrow = (sortKey === "name") ? (sortDir ? " \u25b2" : " \u25bc") : "";
-        var html = "<table><thead><tr><th class='school-name-col sortable' data-sort-key='name'>School" + nameArrow + "</th>";
+        var html = "<table><thead><tr><th class='rank-col'>#</th><th class='school-name-col sortable' data-sort-key='name'>School" + nameArrow + "</th>";
         for (var c = 0; c < cols.length; c++) {
             var arrow = (sortKey === cols[c].key) ? (sortDir ? " \u25b2" : " \u25bc") : "";
             html += "<th class='sortable' data-sort-key='" + cols[c].key + "'>" + cols[c].label + arrow + "</th>";
@@ -630,6 +630,7 @@
 
             // Value row
             html += "<tr" + (isSelected ? " class='selected-row'" : "") + ">";
+            html += "<td class='rank-col'>" + (s + 1) + "</td>";
             html += "<th class='school-name-col'>";
             if (isSelected) {
                 html += "<span class='color-dot' style='background:" + isSelected + "'></span>";
