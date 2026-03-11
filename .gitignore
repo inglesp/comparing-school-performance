@@ -12,9 +12,11 @@ wheels/
 # Claude Code local settings
 .claude/
 
-# Data and database
-data/
+# Database
 db.sqlite3
+
+# Original zip downloads
+data/**/*.zip
 
 # Built site
 _site/

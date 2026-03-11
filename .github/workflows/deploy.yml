@@ -19,19 +19,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          lfs: true
 
       - uses: astral-sh/setup-uv@v4
-
-      - name: Download data
-        run: |
-          mkdir -p data/2024-25
-          cd data/2024-25
-          curl -L -o Performancetables.zip "https://www.compare-school-performance.service.gov.uk/download-data?currentPage=0&regionType=all&la=0&downloadYear=2024-2025&downloadType=ks2revised"
-          unzip Performancetables.zip
-          mv 2024-2025/*.csv .
-          rmdir 2024-2025
 
       - name: Build site
         run: uv run python scripts/build.py
