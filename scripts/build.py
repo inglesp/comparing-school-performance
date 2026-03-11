@@ -250,6 +250,8 @@ def build_html(filter_options):
 <body>
     <h1>Primary School Performance 2024-25 <button id="help-btn" class="help-btn" aria-label="Help">?</button></h1>
 
+    <p class="subtitle">Data from the DfE's <a href="https://www.compare-school-performance.service.gov.uk/" target="_blank" rel="noopener">compare school performance</a> service for 2024-25. Covers state-funded primary schools in England with KS2 results.</p>
+
     <div id="help-modal" class="modal-overlay">
         <div class="modal">
             <div class="modal-header">
@@ -257,9 +259,6 @@ def build_html(filter_options):
                 <button id="help-close" class="modal-close" aria-label="Close">&times;</button>
             </div>
             <div class="modal-body">
-                <p>Data from the DfE's <em>compare school performance</em> service for 2024-25.
-                Covers state-funded primary schools in England with KS2 results.</p>
-
                 <h3>Demographics</h3>
                 <dl>
                     <dt>% FSM ever</dt>
