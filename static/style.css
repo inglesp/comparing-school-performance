@@ -26,6 +26,34 @@ h1 {
     color: #2166ac;
 }
 
+.top-layout {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.sidebar {
+    flex: 0 0 320px;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+
+.chart-area {
+    flex: 1;
+    min-width: 0;
+}
+
+@media (max-width: 900px) {
+    .top-layout {
+        flex-direction: column;
+    }
+    .sidebar {
+        flex: none;
+    }
+}
+
 .help-btn {
     display: inline-flex;
     align-items: center;
@@ -137,8 +165,8 @@ h1 {
     display: flex;
     flex-wrap: wrap;
     gap: 1rem;
-    margin-bottom: 1rem;
-    padding: 1rem;
+    margin-bottom: 0.5rem;
+    padding: 0.75rem 1rem;
     background: white;
     border-radius: 4px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
@@ -157,7 +185,7 @@ h1 {
 }
 
 .filters-panel {
-    margin-bottom: 1rem;
+    margin-bottom: 0.5rem;
     padding: 0.75rem 1rem;
     background: white;
     border-radius: 4px;
@@ -179,9 +207,13 @@ h1 {
 
 .filter-row {
     display: flex;
-    align-items: center;
-    gap: 0.4rem;
+    flex-direction: column;
+    gap: 0.2rem;
     margin-bottom: 0.35rem;
+}
+
+.filter-cat-select {
+    width: 100%;
 }
 
 .filter-row select,
@@ -192,10 +224,18 @@ h1 {
     font-size: 0.85rem;
 }
 
+.filter-value-row {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
 .filter-value-container {
     display: flex;
     align-items: center;
     gap: 0.3rem;
+    flex: 1;
+    min-width: 0;
 }
 
 .filter-value-container select {
@@ -203,6 +243,7 @@ h1 {
     border: 1px solid #ccc;
     border-radius: 3px;
     font-size: 0.85rem;
+    width: 100%;
 }
 
 .dual-slider {
@@ -310,8 +351,8 @@ h1 {
 }
 
 .school-search {
-    margin-bottom: 1rem;
-    padding: 1rem;
+    margin-bottom: 0.5rem;
+    padding: 0.75rem 1rem;
     background: white;
     border-radius: 4px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
@@ -331,7 +372,6 @@ h1 {
 
 .search-wrapper input {
     width: 100%;
-    max-width: 400px;
     padding: 0.4rem 0.5rem;
     border: 1px solid #ccc;
     border-radius: 3px;
@@ -344,7 +384,6 @@ h1 {
     top: 100%;
     left: 0;
     width: 100%;
-    max-width: 400px;
     max-height: 200px;
     overflow-y: auto;
     background: white;
@@ -444,17 +483,16 @@ canvas {
 }
 
 .stats {
-    margin-top: 1rem;
-    padding: 1rem;
+    padding: 0.75rem 1rem;
     background: white;
     border-radius: 4px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    font-size: 0.85rem;
-    line-height: 1.6;
+    font-size: 0.8rem;
+    line-height: 1.5;
 }
 
 .column-selector {
-    margin-top: 1rem;
+    margin-bottom: 0.5rem;
     padding: 0.5rem 0.75rem;
     background: white;
     border-radius: 4px;
@@ -499,12 +537,10 @@ canvas {
 }
 
 .selected-table-container {
-    margin-top: 0.5rem;
     background: white;
     border-radius: 4px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
     overflow: auto;
-    max-height: 70vh;
     padding: 0;
 }
 

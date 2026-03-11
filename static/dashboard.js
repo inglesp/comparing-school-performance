@@ -313,9 +313,13 @@
             onControlChange();
         });
 
+        var valueRow = document.createElement("div");
+        valueRow.className = "filter-value-row";
+        valueRow.appendChild(valueContainer);
+        valueRow.appendChild(removeBtn);
+
         row.appendChild(catSelect);
-        row.appendChild(valueContainer);
-        row.appendChild(removeBtn);
+        row.appendChild(valueRow);
         container.appendChild(row);
 
         if (categoryKey) buildValueControl();

@@ -299,44 +299,50 @@ def build_html(filter_options):
         </div>
     </div>
 
-    <div class="controls">
-        <div class="control-group">
-            <label for="x-axis">X axis:</label>
-            <select id="x-axis">
-                {x_options}
-            </select>
+    <div class="top-layout">
+        <div class="sidebar">
+            <div class="controls">
+                <div class="control-group">
+                    <label for="x-axis">X axis:</label>
+                    <select id="x-axis">
+                        {x_options}
+                    </select>
+                </div>
+                <div class="control-group">
+                    <label for="y-axis">Y axis:</label>
+                    <select id="y-axis">
+                        {y_options}
+                    </select>
+                </div>
+            </div>
+
+            <div class="filters-panel">
+                <div class="filters-header">
+                    <label>Filters:</label>
+                    <button type="button" id="add-filter" class="add-filter-btn">+ Add filter</button>
+                </div>
+                <div id="filter-rows"></div>
+            </div>
+
+            <div class="school-search">
+                <label for="search-input">Highlight schools:</label>
+                <div class="search-wrapper">
+                    <input type="text" id="search-input" placeholder="Search by school name..." autocomplete="off">
+                    <ul id="search-results" class="search-results"></ul>
+                </div>
+                <div id="selected-schools" class="selected-schools"></div>
+            </div>
+
+            <div id="stats" class="stats"></div>
         </div>
-        <div class="control-group">
-            <label for="y-axis">Y axis:</label>
-            <select id="y-axis">
-                {y_options}
-            </select>
+
+        <div class="chart-area">
+            <div class="chart-container">
+                <canvas id="scatterplot"></canvas>
+                <div id="tooltip" class="tooltip"></div>
+            </div>
         </div>
     </div>
-
-    <div class="filters-panel">
-        <div class="filters-header">
-            <label>Filters:</label>
-            <button type="button" id="add-filter" class="add-filter-btn">+ Add filter</button>
-        </div>
-        <div id="filter-rows"></div>
-    </div>
-
-    <div class="school-search">
-        <label for="search-input">Highlight schools:</label>
-        <div class="search-wrapper">
-            <input type="text" id="search-input" placeholder="Search by school name..." autocomplete="off">
-            <ul id="search-results" class="search-results"></ul>
-        </div>
-        <div id="selected-schools" class="selected-schools"></div>
-    </div>
-
-    <div class="chart-container">
-        <canvas id="scatterplot"></canvas>
-        <div id="tooltip" class="tooltip"></div>
-    </div>
-
-    <div id="stats" class="stats"></div>
 
     <div id="column-selector" class="column-selector"></div>
     <div id="selected-table-container" class="selected-table-container"></div>
