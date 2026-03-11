@@ -319,8 +319,7 @@
     function formatRank(rankObj) {
         if (!rankObj) return "\u2013";
         var pctile = Math.round(((rankObj.rank - 1) / (rankObj.total - 1)) * 100);
-        return rankObj.rank.toLocaleString() + " / " + rankObj.total.toLocaleString() +
-            " (p" + pctile + ")";
+        return "p" + pctile;
     }
 
     function renderSelectedTable() {
@@ -379,21 +378,15 @@
             }
             html += "</tr>";
 
-            // Rank rows (if applicable)
+            // Percentile row (if applicable)
             if (rowDef.rank) {
                 var ranks = buildRanks(rowDef.key);
 
-                html += "<tr class='rank-row'><th>rank (national)</th>";
+                html += "<tr class='rank-row'><th>percentile (national / LA)</th>";
                 for (var sn = 0; sn < numSchools; sn++) {
-                    var urnN = selectedList[sn].school.urn;
-                    html += "<td>" + formatRank(ranks.national[urnN]) + "</td>";
-                }
-                html += "</tr>";
-
-                html += "<tr class='rank-row'><th>rank (LA)</th>";
-                for (var sl = 0; sl < numSchools; sl++) {
-                    var urnL = selectedList[sl].school.urn;
-                    html += "<td>" + formatRank(ranks.la[urnL]) + "</td>";
+                    var urn = selectedList[sn].school.urn;
+                    html += "<td>" + formatRank(ranks.national[urn]) +
+                        " / " + formatRank(ranks.la[urn]) + "</td>";
                 }
                 html += "</tr>";
             }
