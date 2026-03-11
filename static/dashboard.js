@@ -792,14 +792,10 @@
         onControlChange();
     }
 
-    function percentileThreshold(key, pct) {
-        var vals = allSchools
-            .map(function (s) { return s[key]; })
-            .filter(function (v) { return v != null; })
-            .sort(function (a, b) { return a - b; });
-        if (vals.length === 0) return -Infinity;
-        var idx = Math.round((pct / 100) * (vals.length - 1));
-        return vals[idx];
+    function schoolPercentile(ranks, urn) {
+        var r = ranks[urn];
+        if (!r) return null;
+        return Math.round(((r.rank - 1) / (r.total - 1)) * 100);
     }
 
     function onControlChange() {
@@ -814,8 +810,9 @@
                 return {
                     type: "percentile",
                     schoolKey: f.schoolKey,
-                    lo: percentileThreshold(f.schoolKey, f.min),
-                    hi: percentileThreshold(f.schoolKey, f.max),
+                    ranks: buildRanks(f.schoolKey),
+                    lo: f.min,
+                    hi: f.max,
                 };
             }
             return f;
@@ -828,7 +825,8 @@
                 if (f.type === "match") {
                     if (s[f.schoolKey] !== f.value) return false;
                 } else if (f.type === "percentile") {
-                    if (s[f.schoolKey] == null || s[f.schoolKey] < f.lo || s[f.schoolKey] > f.hi) return false;
+                    var pct = schoolPercentile(f.ranks, s.urn);
+                    if (pct == null || pct < f.lo || pct > f.hi) return false;
                 }
             }
             return true;
