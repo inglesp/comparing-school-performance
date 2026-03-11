@@ -460,6 +460,13 @@
         }
     }
 
+    function isInFilteredSet(urn) {
+        for (var i = 0; i < filteredSchools.length; i++) {
+            if (filteredSchools[i].urn === urn) return true;
+        }
+        return false;
+    }
+
     function renderSelectedChips() {
         selectedContainer.innerHTML = "";
         let colorIdx = 0;
@@ -694,11 +701,17 @@
             // Value row
             html += "<tr data-urn='" + sch.urn + "'" + (isSelected ? " class='selected-row clickable-row'" : " class='clickable-row'") + ">";
             html += "<td class='rank-col'>" + tableRankMap[sch.urn] + "</td>";
+            var inFilter = isInFilteredSet(sch.urn);
             html += "<th class='school-name-col'>";
             if (isSelected) {
                 html += "<span class='color-dot' style='background:" + isSelected + "'></span>";
             }
-            html += sch.name + "</th>";
+            if (isSelected && !inFilter) {
+                html += "<span class='name-greyed'>" + sch.name + "</span>";
+            } else {
+                html += sch.name;
+            }
+            html += "</th>";
             for (var v = 0; v < cols.length; v++) {
                 var val = sch[cols[v].key];
                 var display;
@@ -978,7 +991,7 @@
             ctx.stroke();
 
             // Label
-            ctx.fillStyle = color;
+            ctx.fillStyle = isInFilteredSet(urn) ? color : "#aaa";
             ctx.font = "bold 11px -apple-system, sans-serif";
             ctx.textAlign = "left";
             ctx.fillText(school.name, cx + SELECTED_RADIUS + 4, cy + 4);

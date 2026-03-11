@@ -408,6 +408,10 @@ h1 {
     color: #c00;
 }
 
+.name-greyed {
+    color: #aaa;
+}
+
 .chart-container {
     position: relative;
     background: white;
