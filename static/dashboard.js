@@ -100,6 +100,7 @@
         });
 
         canvas.addEventListener("mousemove", onMouseMove);
+        canvas.addEventListener("click", onCanvasClick);
         canvas.addEventListener("mouseleave", onMouseLeave);
         window.addEventListener("resize", onResize);
         window.addEventListener("popstate", function () {
@@ -451,6 +452,14 @@
         draw();
     }
 
+    function toggleSchool(urn) {
+        if (selectedUrns.has(urn)) {
+            deselectSchool(urn);
+        } else {
+            selectSchool(urn);
+        }
+    }
+
     function renderSelectedChips() {
         selectedContainer.innerHTML = "";
         let colorIdx = 0;
@@ -683,7 +692,7 @@
             var isSelected = selectedColorMap[sch.urn];
 
             // Value row
-            html += "<tr" + (isSelected ? " class='selected-row'" : "") + ">";
+            html += "<tr data-urn='" + sch.urn + "'" + (isSelected ? " class='selected-row clickable-row'" : " class='clickable-row'") + ">";
             html += "<td class='rank-col'>" + tableRankMap[sch.urn] + "</td>";
             html += "<th class='school-name-col'>";
             if (isSelected) {
@@ -721,7 +730,8 @@
 
         // Attach sort handlers
         container.querySelectorAll(".sortable").forEach(function (th) {
-            th.addEventListener("click", function () {
+            th.addEventListener("click", function (e) {
+                e.stopPropagation();
                 var key = th.getAttribute("data-sort-key");
                 var effectiveKey = tableSortKey || xField;
                 if (effectiveKey === key) {
@@ -731,6 +741,14 @@
                 }
                 tableSortKey = key;
                 renderSelectedTable();
+            });
+        });
+
+        // Attach row click handlers
+        container.querySelectorAll(".clickable-row").forEach(function (tr) {
+            tr.addEventListener("click", function () {
+                var urn = parseInt(tr.getAttribute("data-urn"), 10);
+                if (!isNaN(urn)) toggleSchool(urn);
             });
         });
     }
@@ -1021,6 +1039,12 @@
             tooltip.style.top = ty + "px";
         } else {
             tooltip.classList.remove("visible");
+        }
+    }
+
+    function onCanvasClick() {
+        if (hoveredSchool) {
+            toggleSchool(hoveredSchool.urn);
         }
     }
 

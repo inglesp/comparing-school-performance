@@ -581,6 +581,10 @@ canvas {
     border-top: 1px solid #eee;
 }
 
+.selected-table-container .clickable-row {
+    cursor: pointer;
+}
+
 .selected-table-container tbody tr:hover th,
 .selected-table-container tbody tr:hover td {
     background: #f0f4ff;
