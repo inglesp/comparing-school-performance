@@ -488,6 +488,12 @@ canvas {
     vertical-align: middle;
 }
 
+.selected-only-toggle {
+    font-weight: 600;
+    color: #666;
+    margin-left: auto;
+}
+
 .selected-table-container {
     margin-top: 0.5rem;
     background: white;

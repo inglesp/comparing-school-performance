@@ -48,6 +48,7 @@
 
     var tableSortKey = null;  // null means sort by xField
     var tableSortAsc = false;
+    var tableSelectedOnly = false;
 
     var rankCache = {};
 
@@ -555,6 +556,22 @@
 
             container.appendChild(groupEl);
         });
+
+        // Selected-only toggle
+        if (selectedUrns.size > 0) {
+            var toggleLabel = document.createElement("label");
+            toggleLabel.className = "col-toggle selected-only-toggle";
+            var toggleCb = document.createElement("input");
+            toggleCb.type = "checkbox";
+            toggleCb.checked = tableSelectedOnly;
+            toggleCb.addEventListener("change", function () {
+                tableSelectedOnly = toggleCb.checked;
+                renderSelectedTable();
+            });
+            toggleLabel.appendChild(toggleCb);
+            toggleLabel.appendChild(document.createTextNode(" Highlighted only"));
+            container.appendChild(toggleLabel);
+        }
     }
 
     var TABLE_MAX_ROWS = 500;
@@ -573,22 +590,10 @@
             colorIdx++;
         }
 
-        // Build school list: filtered schools + any selected schools not already included
-        var schoolList = filteredSchools.slice();
-        var seen = new Set();
-        for (var i = 0; i < filteredSchools.length; i++) {
-            seen.add(filteredSchools[i].urn);
-        }
-        for (var su of selectedUrns) {
-            if (!seen.has(su)) {
-                var school = allSchools.find(function (s) { return s.urn === su; });
-                if (school) schoolList.push(school);
-            }
-        }
-
+        // Build school list
         var sortKey = tableSortKey || xField;
         var sortDir = tableSortKey ? tableSortAsc : false;
-        schoolList.sort(function (a, b) {
+        var sortFn = function (a, b) {
             var av = a[sortKey], bv = b[sortKey];
             if (av == null && bv == null) return 0;
             if (av == null) return 1;
@@ -597,10 +602,59 @@
                 return sortDir ? av.localeCompare(bv) : bv.localeCompare(av);
             }
             return sortDir ? av - bv : bv - av;
-        });
+        };
 
-        var truncated = schoolList.length > TABLE_MAX_ROWS;
-        if (truncated) schoolList = schoolList.slice(0, TABLE_MAX_ROWS);
+        var totalCount;
+        var schoolList;
+        var truncated = false;
+        var tableRankMap = {};
+
+        if (tableSelectedOnly) {
+            schoolList = [];
+            for (var su of selectedUrns) {
+                var school = allSchools.find(function (s) { return s.urn === su; });
+                if (school) schoolList.push(school);
+            }
+            totalCount = schoolList.length;
+            schoolList.sort(sortFn);
+            for (var ri2 = 0; ri2 < schoolList.length; ri2++) {
+                tableRankMap[schoolList[ri2].urn] = ri2 + 1;
+            }
+        } else {
+            // All filtered schools + any selected schools not in filtered set
+            var all = filteredSchools.slice();
+            var seen = new Set();
+            for (var i = 0; i < filteredSchools.length; i++) {
+                seen.add(filteredSchools[i].urn);
+            }
+            for (var su2 of selectedUrns) {
+                if (!seen.has(su2)) {
+                    var sch = allSchools.find(function (s) { return s.urn === su2; });
+                    if (sch) all.push(sch);
+                }
+            }
+            totalCount = all.length;
+            all.sort(sortFn);
+
+            // Build rank map from full sorted list
+            tableRankMap = {};
+            for (var ri = 0; ri < all.length; ri++) {
+                tableRankMap[all[ri].urn] = ri + 1;
+            }
+
+            // Truncate but ensure selected schools are always included
+            if (all.length > TABLE_MAX_ROWS) {
+                var topSlice = all.slice(0, TABLE_MAX_ROWS);
+                // Add any selected schools that didn't make the cut
+                for (var j = TABLE_MAX_ROWS; j < all.length; j++) {
+                    if (selectedUrns.has(all[j].urn)) topSlice.push(all[j]);
+                }
+                schoolList = topSlice;
+                truncated = true;
+            } else {
+                schoolList = all;
+            }
+        }
 
         var cols = TABLE_COLUMNS.filter(function (c) { return visibleColumns.has(c.key); });
 
@@ -630,7 +684,7 @@
 
             // Value row
             html += "<tr" + (isSelected ? " class='selected-row'" : "") + ">";
-            html += "<td class='rank-col'>" + (s + 1) + "</td>";
+            html += "<td class='rank-col'>" + tableRankMap[sch.urn] + "</td>";
             html += "<th class='school-name-col'>";
             if (isSelected) {
                 html += "<span class='color-dot' style='background:" + isSelected + "'></span>";
@@ -660,8 +714,8 @@
 
         html += "</tbody></table>";
         if (truncated) {
-            html += "<div class='table-truncated'>Showing first " + TABLE_MAX_ROWS +
-                " of " + seen.size + " schools</div>";
+            html += "<div class='table-truncated'>Showing " + schoolList.length +
+                " of " + totalCount + " schools</div>";
         }
         container.innerHTML = html;
 
