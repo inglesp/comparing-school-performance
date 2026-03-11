@@ -338,6 +338,7 @@ def build_html(filter_options):
 
     <div id="stats" class="stats"></div>
 
+    <div id="column-selector" class="column-selector"></div>
     <div id="selected-table-container" class="selected-table-container"></div>
 
     <script>

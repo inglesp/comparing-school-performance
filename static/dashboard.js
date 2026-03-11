@@ -12,34 +12,39 @@
         "#d4a017", "#2166ac", "#b2182b", "#35978f",
     ];
 
-    var TABLE_ROWS = [
-        { section: "School info" },
-        { key: "la_name", label: "Local authority" },
-        { key: "school_type", label: "Type" },
-        { key: "religious_character", label: "Religious character" },
-        { key: "number_on_roll", label: "Number on roll", rank: true },
-        { section: "Demographics" },
-        { key: "pct_fsm_ever", label: "% FSM ever", fmt: "pct", rank: true },
-        { key: "pct_eal", label: "% EAL", fmt: "pct", rank: true },
-        { key: "pct_sen", label: "% SEN (total)", fmt: "pct", rank: true },
-        { key: "pct_sen_support", label: "% SEN support", fmt: "pct", rank: true },
-        { key: "pct_sen_ehcp", label: "% SEN EHCP", fmt: "pct", rank: true },
-        { key: "eligible_pupils", label: "KS2 eligible pupils", rank: true },
-        { section: "Attainment" },
-        { key: "pct_rwm_expected", label: "% RWM expected", fmt: "pct", rank: true },
-        { key: "pct_rwm_higher", label: "% RWM higher", fmt: "pct", rank: true },
-        { key: "pct_reading_expected", label: "% reading expected", fmt: "pct", rank: true },
-        { key: "pct_reading_higher", label: "% reading higher", fmt: "pct", rank: true },
-        { key: "pct_writing_expected", label: "% writing expected", fmt: "pct", rank: true },
-        { key: "pct_writing_higher", label: "% writing higher", fmt: "pct", rank: true },
-        { key: "pct_maths_expected", label: "% maths expected", fmt: "pct", rank: true },
-        { key: "pct_maths_higher", label: "% maths higher", fmt: "pct", rank: true },
-        { key: "reading_average", label: "Reading avg scaled score", rank: true },
-        { key: "maths_average", label: "Maths avg scaled score", rank: true },
-        { section: "Disadvantage gap" },
-        { key: "pct_rwm_exp_fsm", label: "% RWM expected (FSM)", fmt: "pct", rank: true },
-        { key: "pct_rwm_exp_not_fsm", label: "% RWM expected (non-FSM)", fmt: "pct", rank: true },
+    var TABLE_COLUMNS = [
+        { group: "School info", key: "la_name", label: "LA" },
+        { group: "School info", key: "school_type", label: "Type" },
+        { group: "School info", key: "religious_character", label: "Religion" },
+        { group: "School info", key: "number_on_roll", label: "NOR", rank: true, defaultOn: true },
+        { group: "Demographics", key: "pct_fsm_ever", label: "% FSM", fmt: "pct", rank: true, defaultOn: true },
+        { group: "Demographics", key: "pct_eal", label: "% EAL", fmt: "pct", rank: true, defaultOn: true },
+        { group: "Demographics", key: "pct_sen", label: "% SEN", fmt: "pct", rank: true, defaultOn: true },
+        { group: "Demographics", key: "pct_sen_support", label: "% SEN sup", fmt: "pct", rank: true, defaultOn: true },
+        { group: "Demographics", key: "pct_sen_ehcp", label: "% EHCP", fmt: "pct", rank: true, defaultOn: true },
+        { group: "Demographics", key: "eligible_pupils", label: "KS2 pupils", rank: true },
+        { group: "Attainment (expected)", key: "pct_rwm_expected", label: "% RWM exp", fmt: "pct", rank: true, defaultOn: true },
+        { group: "Attainment (expected)", key: "pct_reading_expected", label: "% read exp", fmt: "pct", rank: true, defaultOn: true },
+        { group: "Attainment (expected)", key: "pct_writing_expected", label: "% write exp", fmt: "pct", rank: true, defaultOn: true },
+        { group: "Attainment (expected)", key: "pct_maths_expected", label: "% maths exp", fmt: "pct", rank: true, defaultOn: true },
+        { group: "Attainment (expected)", key: "pct_gps_expected", label: "% GPS exp", fmt: "pct", rank: true, defaultOn: true },
+        { group: "Attainment (higher)", key: "pct_rwm_higher", label: "% RWM high", fmt: "pct", rank: true },
+        { group: "Attainment (higher)", key: "pct_reading_higher", label: "% read high", fmt: "pct", rank: true },
+        { group: "Attainment (higher)", key: "pct_writing_higher", label: "% write high", fmt: "pct", rank: true },
+        { group: "Attainment (higher)", key: "pct_maths_higher", label: "% maths high", fmt: "pct", rank: true },
+        { group: "Attainment (higher)", key: "pct_gps_higher", label: "% GPS high", fmt: "pct", rank: true },
+        { group: "Scaled scores", key: "reading_average", label: "Read avg", rank: true },
+        { group: "Scaled scores", key: "maths_average", label: "Maths avg", rank: true },
+        { group: "Scaled scores", key: "gps_average", label: "GPS avg", rank: true },
+        { group: "Disadvantage", key: "pct_fsm6cla1a", label: "% disadv", fmt: "pct", rank: true },
+        { group: "Disadvantage", key: "pct_rwm_exp_fsm", label: "% RWM (FSM)", fmt: "pct", rank: true },
+        { group: "Disadvantage", key: "pct_rwm_exp_not_fsm", label: "% RWM (non)", fmt: "pct", rank: true },
     ];
+
+    var visibleColumns = new Set();
+    TABLE_COLUMNS.forEach(function (col) {
+        if (col.defaultOn) visibleColumns.add(col.key);
+    });
 
     var rankCache = {};
 
@@ -118,6 +123,10 @@
         if (params.has("type")) addFilterRow("type", params.get("type"));
         if (params.has("religion")) addFilterRow("religion", params.get("religion"));
 
+        if (params.has("cols")) {
+            visibleColumns = new Set(params.get("cols").split(","));
+        }
+
         selectedUrns = new Set();
         if (params.has("schools")) {
             var urns = params.get("schools").split(",");
@@ -156,6 +165,15 @@
         }
         if (selectedUrns.size > 0) {
             params.set("schools", Array.from(selectedUrns).join(","));
+        }
+
+        // Only include cols param if non-default
+        var defaultCols = new Set();
+        TABLE_COLUMNS.forEach(function (c) { if (c.defaultOn) defaultCols.add(c.key); });
+        var isDefault = visibleColumns.size === defaultCols.size &&
+            Array.from(visibleColumns).every(function (k) { return defaultCols.has(k); });
+        if (!isDefault) {
+            params.set("cols", Array.from(visibleColumns).join(","));
         }
 
         var qs = params.toString();
@@ -506,10 +524,58 @@
         return "p" + pctile;
     }
 
+    function renderColumnSelector() {
+        var container = document.getElementById("column-selector");
+        container.innerHTML = "";
+
+        var groups = [];
+        var groupMap = {};
+        TABLE_COLUMNS.forEach(function (col) {
+            if (!groupMap[col.group]) {
+                groupMap[col.group] = [];
+                groups.push(col.group);
+            }
+            groupMap[col.group].push(col);
+        });
+
+        groups.forEach(function (groupName) {
+            var groupEl = document.createElement("span");
+            groupEl.className = "col-group";
+
+            var groupLabel = document.createElement("span");
+            groupLabel.className = "col-group-label";
+            groupLabel.textContent = groupName + ": ";
+            groupEl.appendChild(groupLabel);
+
+            groupMap[groupName].forEach(function (col) {
+                var label = document.createElement("label");
+                label.className = "col-toggle";
+                var cb = document.createElement("input");
+                cb.type = "checkbox";
+                cb.checked = visibleColumns.has(col.key);
+                cb.addEventListener("change", function () {
+                    if (cb.checked) {
+                        visibleColumns.add(col.key);
+                    } else {
+                        visibleColumns.delete(col.key);
+                    }
+                    renderSelectedTable();
+                    pushStateToURL();
+                });
+                label.appendChild(cb);
+                label.appendChild(document.createTextNode(" " + col.label));
+                groupEl.appendChild(label);
+            });
+
+            container.appendChild(groupEl);
+        });
+    }
+
     function renderSelectedTable() {
         var container = document.getElementById("selected-table-container");
         if (selectedUrns.size === 0) {
             container.innerHTML = "";
+            document.getElementById("column-selector").innerHTML = "";
             return;
         }
 
@@ -525,35 +591,49 @@
             colorIdx++;
         }
 
-        var numSchools = selectedList.length;
+        var cols = TABLE_COLUMNS.filter(function (c) { return visibleColumns.has(c.key); });
+        var hasFilters = getFilters().length > 0;
 
-        // Header row: blank label cell, then one column per school
-        var html = "<table><thead><tr><th></th>";
-        for (var h = 0; h < numSchools; h++) {
-            html += "<th class='school-col-header'>" +
-                "<span class='color-dot' style='background:" + selectedList[h].color + "'></span>" +
-                selectedList[h].school.name + "</th>";
+        renderColumnSelector();
+
+        // Header
+        var html = "<table><thead><tr><th class='school-name-col'>School</th>";
+        for (var c = 0; c < cols.length; c++) {
+            html += "<th>" + cols[c].label + "</th>";
         }
-        html += "</tr></thead><tbody>";
+        html += "</tr>";
 
-        // One row per TABLE_ROWS entry
-        for (var r = 0; r < TABLE_ROWS.length; r++) {
-            var rowDef = TABLE_ROWS[r];
-
-            if (rowDef.section) {
-                html += "<tr class='section-row'><th colspan='" + (numSchools + 1) + "'>" +
-                    rowDef.section + "</th></tr>";
-                continue;
+        // Percentile sub-header if any rank columns visible
+        var hasRankCols = cols.some(function (c) { return c.rank; });
+        if (hasRankCols) {
+            html += "<tr class='rank-row'><th class='school-name-col'></th>";
+            for (var c2 = 0; c2 < cols.length; c2++) {
+                if (cols[c2].rank) {
+                    var pctLabel = hasFilters ? "ntl / flt" : "ntl";
+                    html += "<th>" + pctLabel + "</th>";
+                } else {
+                    html += "<th></th>";
+                }
             }
+            html += "</tr>";
+        }
+        html += "</thead><tbody>";
+
+        // One row per school
+        for (var s = 0; s < selectedList.length; s++) {
+            var school = selectedList[s].school;
+            var color = selectedList[s].color;
 
             // Value row
-            html += "<tr><th>" + rowDef.label + "</th>";
-            for (var s = 0; s < numSchools; s++) {
-                var val = selectedList[s].school[rowDef.key];
+            html += "<tr><th class='school-name-col'>" +
+                "<span class='color-dot' style='background:" + color + "'></span>" +
+                school.name + "</th>";
+            for (var v = 0; v < cols.length; v++) {
+                var val = school[cols[v].key];
                 var display;
                 if (val == null) {
                     display = "\u2013";
-                } else if (rowDef.fmt === "pct") {
+                } else if (cols[v].fmt === "pct") {
                     display = val.toFixed(1) + "%";
                 } else {
                     display = String(val);
@@ -562,19 +642,21 @@
             }
             html += "</tr>";
 
-            // Percentile row (if applicable)
-            if (rowDef.rank) {
-                var nationalRanks = buildRanks(rowDef.key);
-                var filtRanks = buildFilteredRanks(rowDef.key);
-                var hasFilters = getFilters().length > 0;
-
-                var pctLabel = hasFilters ? "percentile (national / filtered)" : "percentile (national)";
-                html += "<tr class='rank-row'><th>" + pctLabel + "</th>";
-                for (var sn = 0; sn < numSchools; sn++) {
-                    var urn = selectedList[sn].school.urn;
-                    var cell = formatRank(nationalRanks[urn]);
-                    if (hasFilters) cell += " / " + formatRank(filtRanks[urn]);
-                    html += "<td>" + cell + "</td>";
+            // Percentile row
+            if (hasRankCols) {
+                html += "<tr class='rank-row'><th class='school-name-col'></th>";
+                for (var p = 0; p < cols.length; p++) {
+                    if (cols[p].rank) {
+                        var nationalRanks = buildRanks(cols[p].key);
+                        var cell = formatRank(nationalRanks[school.urn]);
+                        if (hasFilters) {
+                            var filtRanks = buildFilteredRanks(cols[p].key);
+                            cell += " / " + formatRank(filtRanks[school.urn]);
+                        }
+                        html += "<td>" + cell + "</td>";
+                    } else {
+                        html += "<td></td>";
+                    }
                 }
                 html += "</tr>";
             }

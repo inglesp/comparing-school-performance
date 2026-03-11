@@ -449,8 +449,47 @@ canvas {
     line-height: 1.6;
 }
 
-.selected-table-container {
+.column-selector {
     margin-top: 1rem;
+    padding: 0.5rem 0.75rem;
+    background: white;
+    border-radius: 4px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    font-size: 0.75rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.column-selector:empty {
+    display: none;
+}
+
+.col-group {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.1rem 0.4rem;
+}
+
+.col-group-label {
+    font-weight: 600;
+    color: #666;
+}
+
+.col-toggle {
+    cursor: pointer;
+    white-space: nowrap;
+    color: #444;
+}
+
+.col-toggle input {
+    margin-right: 0.15rem;
+    vertical-align: middle;
+}
+
+.selected-table-container {
+    margin-top: 0.5rem;
     background: white;
     border-radius: 4px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
@@ -461,12 +500,12 @@ canvas {
 
 .selected-table-container table {
     border-collapse: collapse;
-    font-size: 0.9rem;
+    font-size: 0.8rem;
 }
 
 .selected-table-container thead th {
     text-align: right;
-    padding: 0.5rem 0.75rem;
+    padding: 0.4rem 0.5rem;
     border-bottom: 2px solid #ddd;
     font-weight: 600;
     color: #333;
@@ -477,23 +516,27 @@ canvas {
     z-index: 2;
 }
 
-.selected-table-container thead th:first-child {
-    position: sticky;
-    left: 0;
-    top: 0;
-    z-index: 3;
-    background: white;
+.selected-table-container thead .rank-row th {
+    border-bottom: 1px solid #eee;
+    font-weight: 400;
+    font-size: 0.7rem;
+    color: #888;
+    padding-top: 0;
+    top: auto;
 }
 
-.selected-table-container .school-col-header {
-    min-width: 120px;
-    max-width: 180px;
-    white-space: normal;
+.selected-table-container .school-name-col {
+    text-align: left;
+    position: sticky;
+    left: 0;
+    background: white;
+    z-index: 3;
+    white-space: nowrap;
 }
 
 .selected-table-container tbody th {
     text-align: left;
-    padding: 0.4rem 0.75rem;
+    padding: 0.35rem 0.5rem;
     font-weight: 500;
     color: #555;
     white-space: nowrap;
@@ -504,28 +547,14 @@ canvas {
 }
 
 .selected-table-container td {
-    padding: 0.4rem 0.75rem;
+    padding: 0.35rem 0.5rem;
     white-space: nowrap;
     text-align: right;
 }
 
-.selected-table-container .section-row th {
-    padding: 0.6rem 0.75rem 0.3rem;
-    font-weight: 700;
-    font-size: 0.8rem;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: #888;
-    border-top: 1px solid #eee;
-}
-
-.selected-table-container .section-row:first-child th {
-    border-top: none;
-}
-
 .selected-table-container .rank-row th,
 .selected-table-container .rank-row td {
-    font-size: 0.8rem;
+    font-size: 0.7rem;
     color: #888;
     padding-top: 0;
     padding-bottom: 0.15rem;
