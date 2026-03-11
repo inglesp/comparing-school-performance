@@ -222,15 +222,21 @@
                 valSelect.addEventListener("change", onControlChange);
                 valueContainer.appendChild(valSelect);
             } else if (catDef.type === "percentile") {
-                var input = document.createElement("input");
-                input.type = "number";
-                input.min = "0";
-                input.max = "100";
-                input.placeholder = "0";
-                input.className = "pct-input";
-                if (value) input.value = value;
-                input.addEventListener("input", onControlChange);
-                valueContainer.appendChild(input);
+                var slider = document.createElement("input");
+                slider.type = "range";
+                slider.min = "0";
+                slider.max = "100";
+                slider.value = value || "0";
+                slider.className = "pct-slider";
+                var label = document.createElement("span");
+                label.className = "pct-slider-label";
+                label.textContent = "p" + (value || "0");
+                slider.addEventListener("input", function () {
+                    label.textContent = "p" + slider.value;
+                    onControlChange();
+                });
+                valueContainer.appendChild(slider);
+                valueContainer.appendChild(label);
             }
         }
 

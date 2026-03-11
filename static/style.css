@@ -205,12 +205,14 @@ h1 {
     font-size: 0.85rem;
 }
 
-.pct-input {
-    width: 4rem;
-    padding: 0.3rem 0.4rem;
-    border: 1px solid #ccc;
-    border-radius: 3px;
-    font-size: 0.85rem;
+.pct-slider {
+    width: 8rem;
+}
+
+.pct-slider-label {
+    font-size: 0.8rem;
+    color: #555;
+    min-width: 2.5rem;
 }
 
 .filter-remove {
