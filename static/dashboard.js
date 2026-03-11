@@ -131,6 +131,16 @@
         if (params.has("cols")) {
             visibleColumns = new Set(params.get("cols").split(","));
         }
+        if (params.has("sort")) {
+            var sortVal = params.get("sort");
+            if (sortVal.charAt(0) === "-") {
+                tableSortKey = sortVal.slice(1);
+                tableSortAsc = false;
+            } else {
+                tableSortKey = sortVal;
+                tableSortAsc = true;
+            }
+        }
 
         selectedUrns = new Set();
         if (params.has("schools")) {
@@ -170,6 +180,10 @@
         }
         if (selectedUrns.size > 0) {
             params.set("schools", Array.from(selectedUrns).join(","));
+        }
+
+        if (tableSortKey) {
+            params.set("sort", (tableSortAsc ? "" : "-") + tableSortKey);
         }
 
         // Only include cols param if non-default
@@ -757,6 +771,7 @@
                     tableSortAsc = false;
                 }
                 tableSortKey = key;
+                pushStateToURL();
                 renderSelectedTable();
             });
         });
