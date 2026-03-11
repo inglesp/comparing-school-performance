@@ -503,23 +503,6 @@
         return national;
     }
 
-    function buildFilteredRanks(key) {
-        var valid = [];
-        for (var i = 0; i < filteredSchools.length; i++) {
-            var s = filteredSchools[i];
-            if (s[key] != null) {
-                valid.push({ urn: s.urn, val: s[key] });
-            }
-        }
-
-        valid.sort(function (a, b) { return a.val - b.val; });
-
-        var ranks = {};
-        for (var n = 0; n < valid.length; n++) {
-            ranks[valid[n].urn] = { rank: n + 1, total: valid.length };
-        }
-        return ranks;
-    }
 
     function formatRank(rankObj) {
         if (!rankObj) return "\u2013";
@@ -639,11 +622,9 @@
 
         // Pre-build rank lookups for visible rank columns
         var rankData = {};
-        var filtRankData = {};
         for (var rc = 0; rc < cols.length; rc++) {
             if (cols[rc].rank) {
                 rankData[cols[rc].key] = buildRanks(cols[rc].key);
-                if (hasFilters) filtRankData[cols[rc].key] = buildFilteredRanks(cols[rc].key);
             }
         }
 
@@ -670,15 +651,10 @@
                     display = String(val);
                 }
 
-                // Append percentile inline
+                // Append national percentile inline
                 if (cols[v].rank && val != null) {
-                    var pctParts = [];
                     var nr = rankData[cols[v].key];
-                    if (nr) pctParts.push(formatRank(nr[sch.urn]));
-                    if (hasFilters && filtRankData[cols[v].key]) {
-                        pctParts.push(formatRank(filtRankData[cols[v].key][sch.urn]));
-                    }
-                    display += " <span class='pct-inline'>" + pctParts.join("/") + "</span>";
+                    if (nr) display += " <span class='pct-inline'>" + formatRank(nr[sch.urn]) + "</span>";
                 }
 
                 html += "<td>" + display + "</td>";
