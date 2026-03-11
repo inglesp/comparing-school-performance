@@ -673,12 +673,13 @@
         container.querySelectorAll(".sortable").forEach(function (th) {
             th.addEventListener("click", function () {
                 var key = th.getAttribute("data-sort-key");
-                if (tableSortKey === key) {
+                var effectiveKey = tableSortKey || xField;
+                if (effectiveKey === key) {
                     tableSortAsc = !tableSortAsc;
                 } else {
-                    tableSortKey = key;
                     tableSortAsc = false;
                 }
+                tableSortKey = key;
                 renderSelectedTable();
             });
         });
