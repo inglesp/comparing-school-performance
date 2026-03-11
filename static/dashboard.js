@@ -46,6 +46,9 @@
         if (col.defaultOn) visibleColumns.add(col.key);
     });
 
+    var tableSortKey = null;  // null means sort by xField
+    var tableSortAsc = false;
+
     var rankCache = {};
 
     let allSchools = [];
@@ -605,12 +608,17 @@
             }
         }
 
+        var sortKey = tableSortKey || xField;
+        var sortDir = tableSortKey ? tableSortAsc : false;
         schoolList.sort(function (a, b) {
-            var av = a[xField], bv = b[xField];
+            var av = a[sortKey], bv = b[sortKey];
             if (av == null && bv == null) return 0;
             if (av == null) return 1;
             if (bv == null) return -1;
-            return bv - av;
+            if (typeof av === "string") {
+                return sortDir ? av.localeCompare(bv) : bv.localeCompare(av);
+            }
+            return sortDir ? av - bv : bv - av;
         });
 
         var truncated = schoolList.length > TABLE_MAX_ROWS;
@@ -621,9 +629,11 @@
         renderColumnSelector();
 
         // Header
-        var html = "<table><thead><tr><th class='school-name-col'>School</th>";
+        var nameArrow = (sortKey === "name") ? (sortDir ? " \u25b2" : " \u25bc") : "";
+        var html = "<table><thead><tr><th class='school-name-col sortable' data-sort-key='name'>School" + nameArrow + "</th>";
         for (var c = 0; c < cols.length; c++) {
-            html += "<th>" + cols[c].label + "</th>";
+            var arrow = (sortKey === cols[c].key) ? (sortDir ? " \u25b2" : " \u25bc") : "";
+            html += "<th class='sortable' data-sort-key='" + cols[c].key + "'>" + cols[c].label + arrow + "</th>";
         }
         html += "</tr></thead><tbody>";
 
@@ -682,6 +692,20 @@
                 " of " + seen.size + " schools</div>";
         }
         container.innerHTML = html;
+
+        // Attach sort handlers
+        container.querySelectorAll(".sortable").forEach(function (th) {
+            th.addEventListener("click", function () {
+                var key = th.getAttribute("data-sort-key");
+                if (tableSortKey === key) {
+                    tableSortAsc = !tableSortAsc;
+                } else {
+                    tableSortKey = key;
+                    tableSortAsc = false;
+                }
+                renderSelectedTable();
+            });
+        });
     }
 
     function getSelectedColor(urn) {
@@ -721,8 +745,10 @@
     }
 
     function onControlChange() {
+        var prevX = xField;
         xField = document.getElementById("x-axis").value;
         yField = document.getElementById("y-axis").value;
+        if (xField !== prevX && !tableSortKey) tableSortAsc = false;
 
         var filters = getFilters();
         var resolvedFilters = filters.map(function (f) {

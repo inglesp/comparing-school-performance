@@ -514,6 +514,12 @@ canvas {
     top: 0;
     background: white;
     z-index: 2;
+    cursor: pointer;
+    user-select: none;
+}
+
+.selected-table-container thead th:hover {
+    background: #f0f4ff;
 }
 
 .selected-table-container .school-name-col {
