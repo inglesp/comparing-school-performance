@@ -1042,8 +1042,8 @@
                 "<strong>" + best.name + "</strong><br>" +
                 best.la_name + " \u00b7 " + (best.town || "") + "<br>" +
                 best.school_type + "<br>" +
-                xLabel + ": " + best[xField] + "<br>" +
-                yLabel + ": " + best[yField];
+                xLabel + ": " + formatValue(best[xField]) + "<br>" +
+                yLabel + ": " + formatValue(best[yField]);
             tooltip.classList.add("visible");
 
             var tx = mx + 15;
@@ -1118,6 +1118,12 @@
             t += step;
         }
         return ticks;
+    }
+
+    function formatValue(val) {
+        if (val == null) return "\u2013";
+        if (typeof val === "number") return +val.toFixed(2) + "";
+        return val;
     }
 
     function formatTick(val) {
