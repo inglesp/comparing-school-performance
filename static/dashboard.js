@@ -467,35 +467,37 @@
         for (var i = 0; i < allSchools.length; i++) {
             var s = allSchools[i];
             if (s[key] != null) {
-                valid.push({ urn: s.urn, la: s.la_name, val: s[key] });
+                valid.push({ urn: s.urn, val: s[key] });
             }
         }
 
         valid.sort(function (a, b) { return a.val - b.val; });
 
         var national = {};
-        var totalNational = valid.length;
         for (var n = 0; n < valid.length; n++) {
-            national[valid[n].urn] = { rank: n + 1, total: totalNational };
+            national[valid[n].urn] = { rank: n + 1, total: valid.length };
         }
 
-        var byLA = {};
-        for (var j = 0; j < valid.length; j++) {
-            var la = valid[j].la;
-            if (!byLA[la]) byLA[la] = [];
-            byLA[la].push(valid[j]);
-        }
+        rankCache[key] = national;
+        return national;
+    }
 
-        var laRanks = {};
-        for (var laName in byLA) {
-            var laSchools = byLA[laName];
-            for (var k = 0; k < laSchools.length; k++) {
-                laRanks[laSchools[k].urn] = { rank: k + 1, total: laSchools.length };
+    function buildFilteredRanks(key) {
+        var valid = [];
+        for (var i = 0; i < filteredSchools.length; i++) {
+            var s = filteredSchools[i];
+            if (s[key] != null) {
+                valid.push({ urn: s.urn, val: s[key] });
             }
         }
 
-        rankCache[key] = { national: national, la: laRanks };
-        return rankCache[key];
+        valid.sort(function (a, b) { return a.val - b.val; });
+
+        var ranks = {};
+        for (var n = 0; n < valid.length; n++) {
+            ranks[valid[n].urn] = { rank: n + 1, total: valid.length };
+        }
+        return ranks;
     }
 
     function formatRank(rankObj) {
@@ -562,13 +564,17 @@
 
             // Percentile row (if applicable)
             if (rowDef.rank) {
-                var ranks = buildRanks(rowDef.key);
+                var nationalRanks = buildRanks(rowDef.key);
+                var filtRanks = buildFilteredRanks(rowDef.key);
+                var hasFilters = getFilters().length > 0;
 
-                html += "<tr class='rank-row'><th>percentile (national / LA)</th>";
+                var pctLabel = hasFilters ? "percentile (national / filtered)" : "percentile (national)";
+                html += "<tr class='rank-row'><th>" + pctLabel + "</th>";
                 for (var sn = 0; sn < numSchools; sn++) {
                     var urn = selectedList[sn].school.urn;
-                    html += "<td>" + formatRank(ranks.national[urn]) +
-                        " / " + formatRank(ranks.la[urn]) + "</td>";
+                    var cell = formatRank(nationalRanks[urn]);
+                    if (hasFilters) cell += " / " + formatRank(filtRanks[urn]);
+                    html += "<td>" + cell + "</td>";
                 }
                 html += "</tr>";
             }
@@ -647,6 +653,7 @@
         computeExtents();
         onResize();
         updateStats();
+        renderSelectedTable();
         pushStateToURL();
     }
 
