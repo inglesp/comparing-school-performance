@@ -176,7 +176,7 @@
         var df = DEMOGRAPHIC_FIELDS[di];
         FILTER_CATEGORIES.push({
             key: df,
-            label: "Min " + FIELD_LABELS[df],
+            label: FIELD_LABELS[df],
             type: "percentile",
             schoolKey: df,
         });
@@ -222,21 +222,57 @@
                 valSelect.addEventListener("change", onControlChange);
                 valueContainer.appendChild(valSelect);
             } else if (catDef.type === "percentile") {
-                var slider = document.createElement("input");
-                slider.type = "range";
-                slider.min = "0";
-                slider.max = "100";
-                slider.value = value || "0";
-                slider.className = "pct-slider";
+                var parts = value ? String(value).split("-") : [];
+                var minVal = parts[0] || "0";
+                var maxVal = parts[1] || "100";
+
+                var wrapper = document.createElement("div");
+                wrapper.className = "dual-slider";
+
+                var track = document.createElement("div");
+                track.className = "dual-slider-track";
+                var range = document.createElement("div");
+                range.className = "dual-slider-range";
+                track.appendChild(range);
+
+                var sliderMin = document.createElement("input");
+                sliderMin.type = "range";
+                sliderMin.min = "0";
+                sliderMin.max = "100";
+                sliderMin.value = minVal;
+
+                var sliderMax = document.createElement("input");
+                sliderMax.type = "range";
+                sliderMax.min = "0";
+                sliderMax.max = "100";
+                sliderMax.value = maxVal;
+
                 var label = document.createElement("span");
                 label.className = "pct-slider-label";
-                label.textContent = "p" + (value || "0");
-                slider.addEventListener("input", function () {
-                    label.textContent = "p" + slider.value;
-                    onControlChange();
-                });
-                valueContainer.appendChild(slider);
+
+                function updateDualSlider() {
+                    var lo = parseInt(sliderMin.value, 10);
+                    var hi = parseInt(sliderMax.value, 10);
+                    if (lo > hi) {
+                        // Swap if dragged past each other
+                        var tmp = lo; lo = hi; hi = tmp;
+                        sliderMin.value = lo;
+                        sliderMax.value = hi;
+                    }
+                    range.style.left = lo + "%";
+                    range.style.width = (hi - lo) + "%";
+                    label.textContent = "p" + lo + "\u2013" + "p" + hi;
+                }
+
+                sliderMin.addEventListener("input", function () { updateDualSlider(); onControlChange(); });
+                sliderMax.addEventListener("input", function () { updateDualSlider(); onControlChange(); });
+
+                wrapper.appendChild(track);
+                wrapper.appendChild(sliderMin);
+                wrapper.appendChild(sliderMax);
+                valueContainer.appendChild(wrapper);
                 valueContainer.appendChild(label);
+                updateDualSlider();
             }
         }
 
@@ -275,10 +311,14 @@
                 var val = selects.length ? selects[0].value : "";
                 if (val) filters.push({ type: "match", key: catDef.key, schoolKey: catDef.schoolKey, value: val });
             } else if (catDef.type === "percentile") {
-                var inputs = rows[i].querySelectorAll(".filter-value-container input");
-                var pctVal = inputs.length ? parseInt(inputs[0].value, 10) : NaN;
-                if (!isNaN(pctVal) && pctVal > 0) {
-                    filters.push({ type: "percentile", key: catDef.key, schoolKey: catDef.schoolKey, value: pctVal });
+                var sliders = rows[i].querySelectorAll(".dual-slider input");
+                if (sliders.length === 2) {
+                    var lo = parseInt(sliders[0].value, 10);
+                    var hi = parseInt(sliders[1].value, 10);
+                    if (lo > hi) { var tmp = lo; lo = hi; hi = tmp; }
+                    if (lo > 0 || hi < 100) {
+                        filters.push({ type: "percentile", key: catDef.key, schoolKey: catDef.schoolKey, min: lo, max: hi, value: lo + "-" + hi });
+                    }
                 }
             }
         }
@@ -581,7 +621,12 @@
         var filters = getFilters();
         var resolvedFilters = filters.map(function (f) {
             if (f.type === "percentile") {
-                return { type: "percentile", schoolKey: f.schoolKey, threshold: percentileThreshold(f.schoolKey, f.value) };
+                return {
+                    type: "percentile",
+                    schoolKey: f.schoolKey,
+                    lo: percentileThreshold(f.schoolKey, f.min),
+                    hi: percentileThreshold(f.schoolKey, f.max),
+                };
             }
             return f;
         });
@@ -593,7 +638,7 @@
                 if (f.type === "match") {
                     if (s[f.schoolKey] !== f.value) return false;
                 } else if (f.type === "percentile") {
-                    if (s[f.schoolKey] == null || s[f.schoolKey] < f.threshold) return false;
+                    if (s[f.schoolKey] == null || s[f.schoolKey] < f.lo || s[f.schoolKey] > f.hi) return false;
                 }
             }
             return true;
