@@ -247,7 +247,69 @@ def build_html(filter_options):
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <h1>Primary School Performance 2024-25</h1>
+    <h1>Primary School Performance 2024-25 <button id="help-btn" class="help-btn" aria-label="Help">?</button></h1>
+
+    <div id="help-modal" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>Field descriptions</h2>
+                <button id="help-close" class="modal-close" aria-label="Close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>Data from the DfE's <em>compare school performance</em> service for 2024-25.
+                Covers state-funded primary schools in England with KS2 results.</p>
+
+                <h3>Demographics</h3>
+                <dl>
+                    <dt>% FSM ever</dt>
+                    <dd>Percentage of pupils who have ever been eligible for free school meals (from school census).</dd>
+                    <dt>% EAL</dt>
+                    <dd>Percentage of pupils with English as an additional language.</dd>
+                    <dt>% SEN (total)</dt>
+                    <dd>Percentage of pupils with special educational needs (SEN support + EHCP combined).</dd>
+                    <dt>% SEN support</dt>
+                    <dd>Percentage of pupils receiving SEN support (the lower tier, without an EHCP).</dd>
+                    <dt>% SEN EHCP</dt>
+                    <dd>Percentage of pupils with an Education, Health and Care Plan (the most significant needs).</dd>
+                    <dt>Number on roll</dt>
+                    <dd>Total number of pupils at the school (from school census).</dd>
+                    <dt>Eligible pupils (KS2)</dt>
+                    <dd>Number of pupils included in KS2 performance measures (typically Year 6).</dd>
+                </dl>
+
+                <h3>Attainment</h3>
+                <p>KS2 tests are taken at the end of Year 6 (age 10-11). "Expected standard" includes pupils
+                achieving both the expected and higher standard.</p>
+                <dl>
+                    <dt>% RWM expected / higher</dt>
+                    <dd>Percentage reaching the expected/higher standard in reading, writing, and maths combined.</dd>
+                    <dt>% reading expected / higher</dt>
+                    <dd>Percentage reaching the expected/higher standard in reading.</dd>
+                    <dt>% writing expected / higher</dt>
+                    <dd>Percentage reaching the expected/higher standard in writing (teacher assessed).</dd>
+                    <dt>% maths expected / higher</dt>
+                    <dd>Percentage reaching the expected/higher standard in maths.</dd>
+                    <dt>% GPS expected / higher</dt>
+                    <dd>Percentage reaching the expected/higher standard in grammar, punctuation, and spelling.</dd>
+                    <dt>Reading / Maths / GPS avg scaled score</dt>
+                    <dd>Average scaled score (out of 120, with 100 being the expected standard threshold).</dd>
+                </dl>
+
+                <h3>Disadvantage gap</h3>
+                <dl>
+                    <dt>% disadvantaged (KS2)</dt>
+                    <dd>Percentage of KS2 eligible pupils classified as disadvantaged (FSM in last 6 years or looked-after/previously looked-after children).</dd>
+                    <dt>% RWM expected (FSM) / (non-FSM)</dt>
+                    <dd>Percentage reaching expected standard in RWM, split by disadvantage status. The gap between these shows within-school inequality.</dd>
+                </dl>
+
+                <h3>Percentiles</h3>
+                <p>Percentiles show where a school sits relative to all others. p0 = lowest, p100 = highest.
+                Both national and LA percentiles are shown. For all fields, a higher percentile means a
+                higher value (e.g. p90 for % FSM means higher deprivation than 90% of schools).</p>
+            </div>
+        </div>
+    </div>
 
     <div class="controls">
         <div class="control-group">

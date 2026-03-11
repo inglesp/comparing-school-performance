@@ -79,6 +79,17 @@
             }
         });
 
+        var helpModal = document.getElementById("help-modal");
+        document.getElementById("help-btn").addEventListener("click", function () {
+            helpModal.classList.add("visible");
+        });
+        document.getElementById("help-close").addEventListener("click", function () {
+            helpModal.classList.remove("visible");
+        });
+        helpModal.addEventListener("click", function (e) {
+            if (e.target === helpModal) helpModal.classList.remove("visible");
+        });
+
         canvas.addEventListener("mousemove", onMouseMove);
         canvas.addEventListener("mouseleave", onMouseLeave);
         window.addEventListener("resize", onResize);
