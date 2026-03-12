@@ -46,6 +46,7 @@ Dashboard for exploring primary school performance and demographic data in Engla
 
 ## Conventions
 
+- **Do not commit or push unless explicitly asked** — wait for the user to say "commit", "push", or "deploy"
 - Commit messages: short summary line, optional blank line + detail paragraph
 - Always rebuild with `uv run python scripts/build.py` after changing `build.py`, `dashboard.js`, or `style.css`
 - Don't use `python3 -c` with multiline strings containing `#` (triggers permission warnings)
