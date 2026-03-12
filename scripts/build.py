@@ -225,6 +225,11 @@ def build_html(filter_options):
         f"{FIELD_LABELS[f]}</option>\n"
         for f in ATTAINMENT_FIELDS
     )
+    hist_options = "".join(
+        f'<option value="{f}"{" selected" if f == "pct_fsm_ever" else ""}>'
+        f"{FIELD_LABELS[f]}</option>\n"
+        for f in DEMOGRAPHIC_FIELDS + ATTAINMENT_FIELDS
+    )
 
     return f"""<!DOCTYPE html>
 <html lang="en">
@@ -302,17 +307,31 @@ def build_html(filter_options):
     <div class="top-layout">
         <div class="sidebar">
             <div class="controls">
-                <div class="control-group">
-                    <label for="x-axis">X axis:</label>
-                    <select id="x-axis">
-                        {x_options}
-                    </select>
+                <div class="view-toggle">
+                    <button type="button" id="view-hist" class="view-btn active">Histogram</button>
+                    <button type="button" id="view-scatter" class="view-btn">Scatter</button>
                 </div>
-                <div class="control-group">
-                    <label for="y-axis">Y axis:</label>
-                    <select id="y-axis">
-                        {y_options}
-                    </select>
+                <div id="scatter-controls" class="axis-controls" style="display:none">
+                    <div class="control-group">
+                        <label for="x-axis">X axis:</label>
+                        <select id="x-axis">
+                            {x_options}
+                        </select>
+                    </div>
+                    <div class="control-group">
+                        <label for="y-axis">Y axis:</label>
+                        <select id="y-axis">
+                            {y_options}
+                        </select>
+                    </div>
+                </div>
+                <div id="hist-controls" class="axis-controls">
+                    <div class="control-group">
+                        <label for="hist-var">Variable:</label>
+                        <select id="hist-var">
+                            {hist_options}
+                        </select>
+                    </div>
                 </div>
             </div>
 

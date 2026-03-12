@@ -58,9 +58,13 @@
     let canvas, ctx, tooltip;
     let searchInput, searchResults, selectedContainer;
     let width, height, plotW, plotH;
+    let viewMode = "hist";  // "scatter" or "hist"
+    let histField = "pct_fsm_ever";
     let xField, yField;
     let xMin, xMax, yMin, yMax;
+    let histBins = [];  // computed bins for histogram
     let hoveredSchool = null;
+    let hoveredBin = null;
     let dpr = window.devicePixelRatio || 1;
     let activeResultIndex = -1;
 
@@ -76,6 +80,9 @@
 
         document.getElementById("x-axis").addEventListener("change", onControlChange);
         document.getElementById("y-axis").addEventListener("change", onControlChange);
+        document.getElementById("hist-var").addEventListener("change", onControlChange);
+        document.getElementById("view-scatter").addEventListener("click", function () { setViewMode("scatter"); });
+        document.getElementById("view-hist").addEventListener("click", function () { setViewMode("hist"); });
         document.getElementById("add-filter").addEventListener("click", function () {
             addFilterRow("", "", "");
         });
@@ -111,12 +118,29 @@
         fetchData();
     }
 
+    function setViewMode(mode) {
+        viewMode = mode;
+        document.getElementById("view-scatter").classList.toggle("active", mode === "scatter");
+        document.getElementById("view-hist").classList.toggle("active", mode === "hist");
+        document.getElementById("scatter-controls").style.display = mode === "scatter" ? "" : "none";
+        document.getElementById("hist-controls").style.display = mode === "hist" ? "" : "none";
+        onControlChange();
+    }
+
     // --- URL state ---
 
     function restoreStateFromURL() {
         var params = new URLSearchParams(window.location.search);
+        if (params.has("view") && params.get("view") === "scatter") {
+            viewMode = "scatter";
+            document.getElementById("view-scatter").classList.add("active");
+            document.getElementById("view-hist").classList.remove("active");
+            document.getElementById("scatter-controls").style.display = "";
+            document.getElementById("hist-controls").style.display = "none";
+        }
         if (params.has("x")) setSelectValue("x-axis", params.get("x"));
         if (params.has("y")) setSelectValue("y-axis", params.get("y"));
+        if (params.has("var")) setSelectValue("hist-var", params.get("var"));
         if (params.has("f")) {
             params.get("f").split(",").forEach(function (pair) {
                 var sep = pair.indexOf(":");
@@ -167,11 +191,14 @@
         var params = new URLSearchParams();
         var x = document.getElementById("x-axis").value;
         var y = document.getElementById("y-axis").value;
+        var hv = document.getElementById("hist-var").value;
 
         var filters = getFilters();
 
+        if (viewMode === "scatter") params.set("view", "scatter");
         if (x !== "pct_fsm_ever") params.set("x", x);
         if (y !== "pct_rwm_expected") params.set("y", y);
+        if (hv !== "pct_fsm_ever") params.set("var", hv);
 
         if (filters.length > 0) {
             params.set("f", filters.map(function (f) {
@@ -821,6 +848,7 @@
         var prevX = xField;
         xField = document.getElementById("x-axis").value;
         yField = document.getElementById("y-axis").value;
+        histField = document.getElementById("hist-var").value;
         if (xField !== prevX && !tableSortKey) tableSortAsc = false;
 
         var filters = getFilters();
@@ -837,8 +865,13 @@
             return f;
         });
 
+        var requiredField = viewMode === "hist" ? histField : null;
         filteredSchools = allSchools.filter(function (s) {
-            if (s[xField] == null || s[yField] == null) return false;
+            if (viewMode === "scatter") {
+                if (s[xField] == null || s[yField] == null) return false;
+            } else {
+                if (s[requiredField] == null) return false;
+            }
             for (var i = 0; i < resolvedFilters.length; i++) {
                 var f = resolvedFilters[i];
                 if (f.type === "match") {
@@ -852,6 +885,7 @@
         });
 
         computeExtents();
+        if (viewMode === "hist") computeHistBins();
         onResize();
         updateStats();
         renderSelectedTable();
@@ -879,6 +913,40 @@
         xMax += xPad;
         yMin -= yPad;
         yMax += yPad;
+    }
+
+    function computeHistBins() {
+        var field = histField;
+        var allVals = allSchools.filter(function (s) { return s[field] != null; })
+            .map(function (s) { return s[field]; });
+        var filtVals = filteredSchools.map(function (s) { return s[field]; });
+
+        if (allVals.length === 0) { histBins = []; return; }
+
+        var lo = Math.min.apply(null, allVals);
+        var hi = Math.max.apply(null, allVals);
+        if (lo === hi) { lo -= 1; hi += 1; }
+
+        var numBins = 40;
+        var binWidth = (hi - lo) / numBins;
+        histBins = [];
+        for (var i = 0; i < numBins; i++) {
+            histBins.push({
+                x0: lo + i * binWidth,
+                x1: lo + (i + 1) * binWidth,
+                allCount: 0,
+                filtCount: 0,
+            });
+        }
+
+        for (var a = 0; a < allVals.length; a++) {
+            var idx = Math.min(Math.floor((allVals[a] - lo) / binWidth), numBins - 1);
+            histBins[idx].allCount++;
+        }
+        for (var f = 0; f < filtVals.length; f++) {
+            var fi = Math.min(Math.floor((filtVals[f] - lo) / binWidth), numBins - 1);
+            histBins[fi].filtCount++;
+        }
     }
 
     // --- Drawing ---
@@ -910,9 +978,13 @@
     function draw() {
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
         ctx.clearRect(0, 0, width, height);
-        drawAxes();
-        drawMedians();
-        drawDots();
+        if (viewMode === "hist") {
+            drawHistogram();
+        } else {
+            drawAxes();
+            drawMedians();
+            drawDots();
+        }
         updateLegend();
     }
 
@@ -1009,6 +1081,165 @@
         ctx.restore();
     }
 
+    function drawHistogram() {
+        var filterActive = getFilters().length > 0;
+
+        // Draw axes
+        ctx.strokeStyle = "#ccc";
+        ctx.lineWidth = 1;
+        ctx.strokeRect(PADDING.left, PADDING.top, plotW, plotH);
+
+        if (histBins.length === 0) return;
+
+        var maxCount = 0;
+        for (var i = 0; i < histBins.length; i++) {
+            if (histBins[i].allCount > maxCount) maxCount = histBins[i].allCount;
+        }
+        if (maxCount === 0) return;
+
+        var binX0 = histBins[0].x0;
+        var binX1 = histBins[histBins.length - 1].x1;
+        var xRange = binX1 - binX0;
+
+        function histToX(val) {
+            return PADDING.left + ((val - binX0) / xRange) * plotW;
+        }
+        function countToY(count) {
+            return PADDING.top + plotH - (count / maxCount) * plotH;
+        }
+
+        // X-axis ticks
+        ctx.fillStyle = "#666";
+        ctx.font = "11px -apple-system, sans-serif";
+        ctx.textAlign = "center";
+        var xTicks = niceTicksFor(binX0, binX1);
+        for (var t = 0; t < xTicks.length; t++) {
+            var tx = histToX(xTicks[t]);
+            ctx.beginPath();
+            ctx.moveTo(tx, PADDING.top);
+            ctx.lineTo(tx, PADDING.top + plotH);
+            ctx.strokeStyle = "#eee";
+            ctx.stroke();
+            ctx.fillStyle = "#666";
+            ctx.fillText(formatTick(xTicks[t]), tx, height - PADDING.bottom + 18);
+        }
+
+        // Y-axis ticks (counts)
+        ctx.textAlign = "right";
+        var yTicks = niceTicksFor(0, maxCount);
+        for (var yt = 0; yt < yTicks.length; yt++) {
+            var yy = countToY(yTicks[yt]);
+            ctx.beginPath();
+            ctx.moveTo(PADDING.left, yy);
+            ctx.lineTo(PADDING.left + plotW, yy);
+            ctx.strokeStyle = "#eee";
+            ctx.stroke();
+            ctx.fillStyle = "#666";
+            ctx.fillText(formatTick(yTicks[yt]), PADDING.left - 8, yy + 4);
+        }
+
+        // Axis labels
+        ctx.fillStyle = "#333";
+        ctx.font = "12px -apple-system, sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText(FIELD_LABELS[histField] || histField, PADDING.left + plotW / 2, height - 5);
+
+        ctx.save();
+        ctx.translate(14, PADDING.top + plotH / 2);
+        ctx.rotate(-Math.PI / 2);
+        ctx.fillText("Number of schools", 0, 0);
+        ctx.restore();
+
+        // Draw bars
+        for (var b = 0; b < histBins.length; b++) {
+            var bin = histBins[b];
+            var bx = histToX(bin.x0);
+            var bw = histToX(bin.x1) - bx;
+
+            // All schools bar
+            if (bin.allCount > 0) {
+                var bh = PADDING.top + plotH - countToY(bin.allCount);
+                ctx.fillStyle = filterActive ? "rgba(200, 200, 200, 0.6)" : "rgba(51, 119, 204, 0.5)";
+                ctx.fillRect(bx, countToY(bin.allCount), bw, bh);
+                ctx.strokeStyle = filterActive ? "rgba(160, 160, 160, 0.8)" : "rgba(51, 119, 204, 0.7)";
+                ctx.lineWidth = 0.5;
+                ctx.strokeRect(bx, countToY(bin.allCount), bw, bh);
+            }
+
+            // Filtered schools bar (overlaid)
+            if (filterActive && bin.filtCount > 0) {
+                var fh = PADDING.top + plotH - countToY(bin.filtCount);
+                ctx.fillStyle = "rgba(51, 119, 204, 0.6)";
+                ctx.fillRect(bx, countToY(bin.filtCount), bw, fh);
+                ctx.strokeStyle = "rgba(51, 119, 204, 0.8)";
+                ctx.lineWidth = 0.5;
+                ctx.strokeRect(bx, countToY(bin.filtCount), bw, fh);
+            }
+        }
+
+        // Draw median lines
+        var natMed = computeMedian(allSchools, histField);
+        if (natMed != null) {
+            ctx.save();
+            ctx.strokeStyle = "#888";
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            var mx = histToX(natMed);
+            ctx.moveTo(mx, PADDING.top);
+            ctx.lineTo(mx, PADDING.top + plotH);
+            ctx.stroke();
+            ctx.restore();
+        }
+        if (filterActive) {
+            var filtMed = computeMedian(filteredSchools, histField);
+            if (filtMed != null) {
+                ctx.save();
+                ctx.strokeStyle = "#888";
+                ctx.lineWidth = 2;
+                ctx.setLineDash([8, 5]);
+                ctx.beginPath();
+                var fmx = histToX(filtMed);
+                ctx.moveTo(fmx, PADDING.top);
+                ctx.lineTo(fmx, PADDING.top + plotH);
+                ctx.stroke();
+                ctx.restore();
+            }
+        }
+
+        // Draw highlighted school markers
+        for (var urn of selectedUrns) {
+            var school = allSchools.find(function (s) { return s.urn === urn; });
+            if (!school || school[histField] == null) continue;
+            var sx = histToX(school[histField]);
+            var color = getSelectedColor(urn);
+            // Draw triangle marker at bottom
+            ctx.fillStyle = color;
+            ctx.beginPath();
+            ctx.moveTo(sx, PADDING.top + plotH + 8);
+            ctx.lineTo(sx - 5, PADDING.top + plotH + 16);
+            ctx.lineTo(sx + 5, PADDING.top + plotH + 16);
+            ctx.closePath();
+            ctx.fill();
+            // Vertical line
+            ctx.save();
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 1.5;
+            ctx.setLineDash([3, 3]);
+            ctx.beginPath();
+            ctx.moveTo(sx, PADDING.top);
+            ctx.lineTo(sx, PADDING.top + plotH);
+            ctx.stroke();
+            ctx.restore();
+        }
+
+        // Store histogram coordinate functions for hover
+        histToXFn = histToX;
+        histMaxCount = maxCount;
+    }
+
+    var histToXFn = null;
+    var histMaxCount = 0;
+
     function updateLegend() {
         var legend = document.getElementById("chart-legend");
         var filterActive = getFilters().length > 0;
@@ -1091,6 +1322,11 @@
         var mx = e.clientX - rect.left;
         var my = e.clientY - rect.top;
 
+        if (viewMode === "hist") {
+            onHistMouseMove(mx, my);
+            return;
+        }
+
         var bestDist = Infinity;
         var best = null;
         var schools = filteredSchools.length > 0 ? filteredSchools : [];
@@ -1131,7 +1367,47 @@
         }
     }
 
+    function onHistMouseMove(mx, my) {
+        if (!histToXFn || histBins.length === 0) return;
+        var filterActive = getFilters().length > 0;
+
+        // Find which bin the mouse is over
+        var found = null;
+        for (var i = 0; i < histBins.length; i++) {
+            var bx0 = histToXFn(histBins[i].x0);
+            var bx1 = histToXFn(histBins[i].x1);
+            if (mx >= bx0 && mx < bx1 && my >= PADDING.top && my <= PADDING.top + plotH) {
+                found = histBins[i];
+                break;
+            }
+        }
+
+        if (found !== hoveredBin) {
+            hoveredBin = found;
+        }
+
+        if (found) {
+            var label = FIELD_LABELS[histField] || histField;
+            var html = "<strong>" + formatValue(found.x0) + " \u2013 " + formatValue(found.x1) + "</strong><br>";
+            html += "All schools: " + found.allCount;
+            if (filterActive) html += "<br>Filtered: " + found.filtCount;
+            tooltip.innerHTML = html;
+            tooltip.classList.add("visible");
+
+            var tx = mx + 15;
+            var ty = my - 10;
+            if (tx + 300 > width) tx = mx - 260;
+            if (ty < 0) ty = my + 15;
+            tooltip.style.left = tx + "px";
+            tooltip.style.top = ty + "px";
+        } else {
+            tooltip.classList.remove("visible");
+            hoveredBin = null;
+        }
+    }
+
     function onCanvasClick() {
+        if (viewMode === "hist") return;
         if (hoveredSchool) {
             toggleSchool(hoveredSchool.urn);
         }
@@ -1139,6 +1415,7 @@
 
     function onMouseLeave() {
         hoveredSchool = null;
+        hoveredBin = null;
         tooltip.classList.remove("visible");
         draw();
     }
@@ -1153,9 +1430,6 @@
             return;
         }
 
-        var xVals = filteredSchools.map(function (s) { return s[xField]; }).filter(function (v) { return v != null; });
-        var yVals = filteredSchools.map(function (s) { return s[yField]; }).filter(function (v) { return v != null; });
-
         var mean = function (arr) { return arr.reduce(function (a, b) { return a + b; }, 0) / arr.length; };
         var median = function (arr) {
             var sorted = arr.slice().sort(function (a, b) { return a - b; });
@@ -1163,13 +1437,22 @@
             return sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
         };
 
-        var xLabel = FIELD_LABELS[xField] || xField;
-        var yLabel = FIELD_LABELS[yField] || yField;
-
-        stats.innerHTML =
-            "<strong>" + n + " schools</strong> \u00b7 " +
-            xLabel + ": mean " + mean(xVals).toFixed(1) + ", median " + median(xVals).toFixed(1) + " \u00b7 " +
-            yLabel + ": mean " + mean(yVals).toFixed(1) + ", median " + median(yVals).toFixed(1);
+        if (viewMode === "hist") {
+            var hVals = filteredSchools.map(function (s) { return s[histField]; }).filter(function (v) { return v != null; });
+            var hLabel = FIELD_LABELS[histField] || histField;
+            stats.innerHTML =
+                "<strong>" + n + " schools</strong> \u00b7 " +
+                hLabel + ": mean " + mean(hVals).toFixed(1) + ", median " + median(hVals).toFixed(1);
+        } else {
+            var xVals = filteredSchools.map(function (s) { return s[xField]; }).filter(function (v) { return v != null; });
+            var yVals = filteredSchools.map(function (s) { return s[yField]; }).filter(function (v) { return v != null; });
+            var xLabel = FIELD_LABELS[xField] || xField;
+            var yLabel = FIELD_LABELS[yField] || yField;
+            stats.innerHTML =
+                "<strong>" + n + " schools</strong> \u00b7 " +
+                xLabel + ": mean " + mean(xVals).toFixed(1) + ", median " + median(xVals).toFixed(1) + " \u00b7 " +
+                yLabel + ": mean " + mean(yVals).toFixed(1) + ", median " + median(yVals).toFixed(1);
+        }
     }
 
     // --- Utilities ---

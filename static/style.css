@@ -164,12 +164,51 @@ h1 {
 .controls {
     display: flex;
     flex-wrap: wrap;
-    gap: 1rem;
+    gap: 0.75rem;
     margin-bottom: 0.5rem;
     padding: 0.75rem 1rem;
     background: white;
     border-radius: 4px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.view-toggle {
+    display: flex;
+    gap: 0;
+    width: 100%;
+}
+
+.view-btn {
+    flex: 1;
+    padding: 0.3rem 0.5rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    border: 1px solid #ccc;
+    background: white;
+    color: #666;
+    cursor: pointer;
+}
+
+.view-btn:first-child {
+    border-radius: 3px 0 0 3px;
+}
+
+.view-btn:last-child {
+    border-radius: 0 3px 3px 0;
+    border-left: none;
+}
+
+.view-btn.active {
+    background: #2166ac;
+    border-color: #2166ac;
+    color: white;
+}
+
+.axis-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    width: 100%;
 }
 
 .control-group {
