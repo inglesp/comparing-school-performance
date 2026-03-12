@@ -340,6 +340,7 @@ def build_html(filter_options):
             <div class="chart-container">
                 <canvas id="scatterplot"></canvas>
                 <div id="tooltip" class="tooltip"></div>
+                <div id="chart-legend" class="chart-legend"></div>
             </div>
         </div>
     </div>

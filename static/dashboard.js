@@ -911,7 +911,56 @@
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
         ctx.clearRect(0, 0, width, height);
         drawAxes();
+        drawMedians();
         drawDots();
+        updateLegend();
+    }
+
+    function computeMedian(arr, key) {
+        var vals = [];
+        for (var i = 0; i < arr.length; i++) {
+            if (arr[i][key] != null) vals.push(arr[i][key]);
+        }
+        if (vals.length === 0) return null;
+        vals.sort(function (a, b) { return a - b; });
+        var mid = vals.length / 2;
+        if (vals.length % 2 === 1) return vals[Math.floor(mid)];
+        return (vals[Math.floor(mid) - 1] + vals[Math.floor(mid)]) / 2;
+    }
+
+    function drawMedianLine(val, axis, color, dashed) {
+        ctx.save();
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 2;
+        if (dashed) ctx.setLineDash([8, 5]);
+        ctx.beginPath();
+        if (axis === "x") {
+            var x = toCanvasX(val);
+            ctx.moveTo(x, PADDING.top);
+            ctx.lineTo(x, PADDING.top + plotH);
+        } else {
+            var y = toCanvasY(val);
+            ctx.moveTo(PADDING.left, y);
+            ctx.lineTo(PADDING.left + plotW, y);
+        }
+        ctx.stroke();
+        ctx.restore();
+    }
+
+    function drawMedians() {
+        var filterActive = getFilters().length > 0;
+
+        var natXMed = computeMedian(allSchools, xField);
+        var natYMed = computeMedian(allSchools, yField);
+        if (natXMed != null) drawMedianLine(natXMed, "x", "#888", false);
+        if (natYMed != null) drawMedianLine(natYMed, "y", "#888", false);
+
+        if (filterActive) {
+            var filtXMed = computeMedian(filteredSchools, xField);
+            var filtYMed = computeMedian(filteredSchools, yField);
+            if (filtXMed != null) drawMedianLine(filtXMed, "x", "#888", true);
+            if (filtYMed != null) drawMedianLine(filtYMed, "y", "#888", true);
+        }
     }
 
     function drawAxes() {
@@ -958,6 +1007,16 @@
         ctx.rotate(-Math.PI / 2);
         ctx.fillText(FIELD_LABELS[yField] || yField, 0, 0);
         ctx.restore();
+    }
+
+    function updateLegend() {
+        var legend = document.getElementById("chart-legend");
+        var filterActive = getFilters().length > 0;
+        var html = '<span class="chart-legend-item"><span class="chart-legend-line"></span> National median</span>';
+        if (filterActive) {
+            html += '<span class="chart-legend-item"><span class="chart-legend-line dashed"></span> Filtered median</span>';
+        }
+        legend.innerHTML = html;
     }
 
     function drawDots() {

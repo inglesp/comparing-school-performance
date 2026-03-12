@@ -464,6 +464,35 @@ canvas {
     cursor: crosshair;
 }
 
+.chart-legend {
+    display: flex;
+    gap: 1rem;
+    font-size: 0.75rem;
+    color: #666;
+    padding-top: 0.25rem;
+}
+
+.chart-legend:empty {
+    display: none;
+}
+
+.chart-legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.chart-legend-line {
+    display: inline-block;
+    width: 1.5rem;
+    height: 0;
+    border-top: 2px solid #888;
+}
+
+.chart-legend-line.dashed {
+    border-top-style: dashed;
+}
+
 .tooltip {
     display: none;
     position: absolute;
