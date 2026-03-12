@@ -214,22 +214,41 @@ ATTAINMENT_FIELDS = [
 ]
 
 
+FIELD_GROUPS = [
+    ("Demographics", [
+        "pct_fsm_ever", "pct_eal", "pct_sen", "pct_sen_support",
+        "pct_sen_ehcp", "number_on_roll", "eligible_pupils",
+    ]),
+    ("Attainment (expected)", [
+        "pct_rwm_expected", "pct_reading_expected", "pct_writing_expected",
+        "pct_maths_expected", "pct_gps_expected",
+    ]),
+    ("Attainment (higher)", [
+        "pct_rwm_higher", "pct_reading_higher", "pct_writing_higher",
+        "pct_maths_higher", "pct_gps_higher",
+    ]),
+    ("Scaled scores", ["reading_average", "maths_average", "gps_average"]),
+    ("Disadvantage", [
+        "pct_fsm6cla1a", "pct_rwm_exp_fsm", "pct_rwm_exp_not_fsm",
+    ]),
+]
+
+
+def build_grouped_options(default):
+    html = ""
+    for group_name, fields in FIELD_GROUPS:
+        html += f'<optgroup label="{group_name}">\n'
+        for f in fields:
+            selected = " selected" if f == default else ""
+            html += f'<option value="{f}"{selected}>{FIELD_LABELS[f]}</option>\n'
+        html += "</optgroup>\n"
+    return html
+
+
 def build_html(filter_options):
-    x_options = "".join(
-        f'<option value="{f}"{" selected" if f == "pct_fsm_ever" else ""}>'
-        f"{FIELD_LABELS[f]}</option>\n"
-        for f in DEMOGRAPHIC_FIELDS
-    )
-    y_options = "".join(
-        f'<option value="{f}"{" selected" if f == "pct_rwm_expected" else ""}>'
-        f"{FIELD_LABELS[f]}</option>\n"
-        for f in ATTAINMENT_FIELDS
-    )
-    hist_options = "".join(
-        f'<option value="{f}"{" selected" if f == "pct_fsm_ever" else ""}>'
-        f"{FIELD_LABELS[f]}</option>\n"
-        for f in DEMOGRAPHIC_FIELDS + ATTAINMENT_FIELDS
-    )
+    x_options = build_grouped_options("pct_fsm_ever")
+    y_options = build_grouped_options("pct_rwm_expected")
+    hist_options = build_grouped_options("pct_fsm_ever")
 
     return f"""<!DOCTYPE html>
 <html lang="en">
