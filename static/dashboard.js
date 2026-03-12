@@ -1092,8 +1092,9 @@
         if (histBins.length === 0) return;
 
         var maxCount = 0;
+        var countKey = filterActive ? "filtCount" : "allCount";
         for (var i = 0; i < histBins.length; i++) {
-            if (histBins[i].allCount > maxCount) maxCount = histBins[i].allCount;
+            if (histBins[i][countKey] > maxCount) maxCount = histBins[i][countKey];
         }
         if (maxCount === 0) return;
 
@@ -1155,25 +1156,15 @@
             var bin = histBins[b];
             var bx = histToX(bin.x0);
             var bw = histToX(bin.x1) - bx;
+            var count = filterActive ? bin.filtCount : bin.allCount;
 
-            // All schools bar
-            if (bin.allCount > 0) {
-                var bh = PADDING.top + plotH - countToY(bin.allCount);
-                ctx.fillStyle = filterActive ? "rgba(200, 200, 200, 0.6)" : "rgba(51, 119, 204, 0.5)";
-                ctx.fillRect(bx, countToY(bin.allCount), bw, bh);
-                ctx.strokeStyle = filterActive ? "rgba(160, 160, 160, 0.8)" : "rgba(51, 119, 204, 0.7)";
+            if (count > 0) {
+                var bh = PADDING.top + plotH - countToY(count);
+                ctx.fillStyle = "rgba(51, 119, 204, 0.5)";
+                ctx.fillRect(bx, countToY(count), bw, bh);
+                ctx.strokeStyle = "rgba(51, 119, 204, 0.7)";
                 ctx.lineWidth = 0.5;
-                ctx.strokeRect(bx, countToY(bin.allCount), bw, bh);
-            }
-
-            // Filtered schools bar (overlaid)
-            if (filterActive && bin.filtCount > 0) {
-                var fh = PADDING.top + plotH - countToY(bin.filtCount);
-                ctx.fillStyle = "rgba(51, 119, 204, 0.6)";
-                ctx.fillRect(bx, countToY(bin.filtCount), bw, fh);
-                ctx.strokeStyle = "rgba(51, 119, 204, 0.8)";
-                ctx.lineWidth = 0.5;
-                ctx.strokeRect(bx, countToY(bin.filtCount), bw, fh);
+                ctx.strokeRect(bx, countToY(count), bw, bh);
             }
         }
 
@@ -1251,35 +1242,13 @@
     }
 
     function drawDots() {
-        var filterActive = getFilters().length > 0;
-
-        if (filterActive) {
-            ctx.fillStyle = "rgba(200, 200, 200, 0.3)";
-            for (var i = 0; i < allSchools.length; i++) {
-                var s = allSchools[i];
-                if (s[xField] == null || s[yField] == null) continue;
-                if (selectedUrns.has(s.urn)) continue;
-                ctx.beginPath();
-                ctx.arc(toCanvasX(s[xField]), toCanvasY(s[yField]), DOT_RADIUS, 0, Math.PI * 2);
-                ctx.fill();
-            }
-            ctx.fillStyle = "rgba(51, 119, 204, 0.6)";
-            for (var j = 0; j < filteredSchools.length; j++) {
-                var sf = filteredSchools[j];
-                if (selectedUrns.has(sf.urn)) continue;
-                ctx.beginPath();
-                ctx.arc(toCanvasX(sf[xField]), toCanvasY(sf[yField]), HIGHLIGHT_RADIUS, 0, Math.PI * 2);
-                ctx.fill();
-            }
-        } else {
-            ctx.fillStyle = "rgba(51, 119, 204, 0.35)";
-            for (var k = 0; k < filteredSchools.length; k++) {
-                var su = filteredSchools[k];
-                if (selectedUrns.has(su.urn)) continue;
-                ctx.beginPath();
-                ctx.arc(toCanvasX(su[xField]), toCanvasY(su[yField]), DOT_RADIUS, 0, Math.PI * 2);
-                ctx.fill();
-            }
+        ctx.fillStyle = "rgba(51, 119, 204, 0.35)";
+        for (var k = 0; k < filteredSchools.length; k++) {
+            var su = filteredSchools[k];
+            if (selectedUrns.has(su.urn)) continue;
+            ctx.beginPath();
+            ctx.arc(toCanvasX(su[xField]), toCanvasY(su[yField]), DOT_RADIUS, 0, Math.PI * 2);
+            ctx.fill();
         }
 
         // Draw selected schools on top
@@ -1389,8 +1358,8 @@
         if (found) {
             var label = FIELD_LABELS[histField] || histField;
             var html = "<strong>" + formatValue(found.x0) + " \u2013 " + formatValue(found.x1) + "</strong><br>";
-            html += "All schools: " + found.allCount;
-            if (filterActive) html += "<br>Filtered: " + found.filtCount;
+            var count = filterActive ? found.filtCount : found.allCount;
+            html += count + " school" + (count !== 1 ? "s" : "");
             tooltip.innerHTML = html;
             tooltip.classList.add("visible");
 
