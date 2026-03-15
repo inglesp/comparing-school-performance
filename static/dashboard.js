@@ -216,6 +216,11 @@
     ];
 
     FILTER_CATEGORIES.push({
+        key: "idaci", label: "IDACI quintile", group: "Demographics", type: "select",
+        options: ["1", "2", "3", "4", "5"], schoolKey: "idaci_quintile", numeric: true
+    });
+
+    FILTER_CATEGORIES.push({
         key: "ofsted_framework", label: "Inspection framework", group: "Ofsted", type: "select",
         options: FILTER_OPTIONS.ofsted_frameworks, schoolKey: "ofsted_framework"
     });
@@ -837,8 +842,12 @@
                     display = "\u2013";
                 } else if (cols[v].fmt === "pct") {
                     display = val.toFixed(1) + "%";
+                } else if (cols[v].fmt === "date") {
+                    display = formatDate(val);
                 } else if (NF_FIELDS.indexOf(cols[v].key) >= 0 && NF_LABELS[val]) {
                     display = NF_LABELS[val];
+                } else if (OFSTED_FIELDS.indexOf(cols[v].key) >= 0 && OFSTED_GRADE_TICK_LABELS[val]) {
+                    display = OFSTED_GRADE_TICK_LABELS[val];
                 } else {
                     display = String(val);
                 }
@@ -899,7 +908,7 @@
     // --- Data loading and filtering ---
 
     function fetchData() {
-        fetch(typeof DATA_URL !== "undefined" ? DATA_URL : API_URL)
+        fetch(DATA_URL)
             .then(function (r) { return r.json(); })
             .then(function (data) {
                 // Convert new framework text values to numeric
@@ -1509,6 +1518,13 @@
             t += step;
         }
         return ticks;
+    }
+
+    var DATE_MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    function formatDate(val) {
+        // "2024-06-12" -> "12 Jun 2024"
+        var parts = val.split("-");
+        return parseInt(parts[2], 10) + " " + DATE_MONTHS[parseInt(parts[1], 10) - 1] + " " + parts[0];
     }
 
     function formatValue(val) {

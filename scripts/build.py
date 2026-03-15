@@ -350,7 +350,7 @@ KS2_FIELD_LABELS = {
 
 KS2_DEMOGRAPHIC_FIELDS = [
     "pct_fsm_ever", "pct_eal", "pct_sen", "pct_sen_support", "pct_sen_ehcp",
-    "idaci_quintile", "number_on_roll", "eligible_pupils",
+    "number_on_roll", "eligible_pupils",
 ]
 
 KS2_FIELD_GROUPS = [
@@ -400,7 +400,7 @@ KS2_TABLE_COLUMNS = [
     {"group": "Ofsted", "key": "ofsted_personal", "label": "Personal"},
     {"group": "Ofsted", "key": "ofsted_leadership", "label": "Leadership"},
     {"group": "Ofsted", "key": "ofsted_early_years", "label": "Early yrs"},
-    {"group": "Ofsted", "key": "ofsted_date", "label": "Date"},
+    {"group": "Ofsted", "key": "ofsted_date", "label": "Date", "fmt": "date"},
     {"group": "Ofsted (new)", "key": "nf_inclusion", "label": "Inclusion"},
     {"group": "Ofsted (new)", "key": "nf_curriculum", "label": "Curriculum"},
     {"group": "Ofsted (new)", "key": "nf_achievement", "label": "Achievement"},
@@ -408,7 +408,7 @@ KS2_TABLE_COLUMNS = [
     {"group": "Ofsted (new)", "key": "nf_personal", "label": "Personal"},
     {"group": "Ofsted (new)", "key": "nf_early_years", "label": "Early yrs"},
     {"group": "Ofsted (new)", "key": "nf_leadership", "label": "Leadership"},
-    {"group": "Ofsted (new)", "key": "nf_date", "label": "Date"},
+    {"group": "Ofsted (new)", "key": "nf_date", "label": "Date", "fmt": "date"},
     {"group": "Attainment (expected)", "key": "pct_rwm_expected", "label": "% RWM exp", "fmt": "pct", "rank": True, "defaultOn": True},
     {"group": "Attainment (expected)", "key": "pct_reading_expected", "label": "% read exp", "fmt": "pct", "rank": True, "defaultOn": True},
     {"group": "Attainment (expected)", "key": "pct_writing_expected", "label": "% write exp", "fmt": "pct", "rank": True, "defaultOn": True},
@@ -476,7 +476,7 @@ KS4_FIELD_LABELS = {
 
 KS4_DEMOGRAPHIC_FIELDS = [
     "pct_fsm_ever", "pct_eal", "pct_sen", "pct_sen_support", "pct_sen_ehcp",
-    "idaci_quintile", "number_on_roll", "ks4_pupils",
+    "number_on_roll", "ks4_pupils",
 ]
 
 KS4_FIELD_GROUPS = [
@@ -522,14 +522,14 @@ KS4_TABLE_COLUMNS = [
     {"group": "Ofsted", "key": "ofsted_personal", "label": "Personal"},
     {"group": "Ofsted", "key": "ofsted_leadership", "label": "Leadership"},
     {"group": "Ofsted", "key": "ofsted_sixth_form", "label": "Sixth form"},
-    {"group": "Ofsted", "key": "ofsted_date", "label": "Date"},
+    {"group": "Ofsted", "key": "ofsted_date", "label": "Date", "fmt": "date"},
     {"group": "Ofsted (new)", "key": "nf_inclusion", "label": "Inclusion"},
     {"group": "Ofsted (new)", "key": "nf_curriculum", "label": "Curriculum"},
     {"group": "Ofsted (new)", "key": "nf_achievement", "label": "Achievement"},
     {"group": "Ofsted (new)", "key": "nf_attendance", "label": "Attendance"},
     {"group": "Ofsted (new)", "key": "nf_personal", "label": "Personal"},
     {"group": "Ofsted (new)", "key": "nf_leadership", "label": "Leadership"},
-    {"group": "Ofsted (new)", "key": "nf_date", "label": "Date"},
+    {"group": "Ofsted (new)", "key": "nf_date", "label": "Date", "fmt": "date"},
     {"group": "Attainment 8", "key": "att8", "label": "Att 8", "rank": True, "defaultOn": True},
     {"group": "Attainment 8", "key": "att8_english", "label": "Att 8 Eng", "rank": True, "defaultOn": True},
     {"group": "Attainment 8", "key": "att8_maths", "label": "Att 8 Mat", "rank": True, "defaultOn": True},
@@ -692,7 +692,7 @@ KS2_HELP = """\
     <dt>% SEN EHCP</dt>
     <dd>Percentage of pupils with an Education, Health and Care Plan (the most significant needs).</dd>
     <dt>IDACI quintile</dt>
-    <dd>Income Deprivation Affecting Children Index quintile (1 = most deprived, 5 = least deprived). From Ofsted management information.</dd>
+    <dd>Income Deprivation Affecting Children Index quintile (1 = least deprived, 5 = most deprived). From Ofsted management information.</dd>
     <dt>Number on roll</dt>
     <dd>Total number of pupils at the school (from school census).</dd>
     <dt>Eligible pupils (KS2)</dt>
@@ -761,7 +761,7 @@ KS4_HELP = """\
     <dt>% SEN EHCP</dt>
     <dd>Percentage of pupils with an Education, Health and Care Plan (the most significant needs).</dd>
     <dt>IDACI quintile</dt>
-    <dd>Income Deprivation Affecting Children Index quintile (1 = most deprived, 5 = least deprived). From Ofsted management information.</dd>
+    <dd>Income Deprivation Affecting Children Index quintile (1 = least deprived, 5 = most deprived). From Ofsted management information.</dd>
     <dt>Number on roll</dt>
     <dd>Total number of pupils at the school (from school census).</dd>
     <dt>KS4 pupils</dt>
