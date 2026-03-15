@@ -16,6 +16,7 @@
         { group: "School info", key: "la_name", label: "LA" },
         { group: "School info", key: "school_type", label: "Type" },
         { group: "School info", key: "religious_character", label: "Religion" },
+        { group: "School info", key: "trust_name", label: "Trust" },
         { group: "School info", key: "number_on_roll", label: "NOR", rank: true, defaultOn: true },
         { group: "Demographics", key: "pct_fsm_ever", label: "% FSM", fmt: "pct", rank: true, defaultOn: true },
         { group: "Demographics", key: "pct_eal", label: "% EAL", fmt: "pct", rank: true, defaultOn: true },
@@ -233,6 +234,7 @@
         { key: "la", label: "Local authority", type: "select", options: FILTER_OPTIONS.la_names, schoolKey: "la_name" },
         { key: "type", label: "School type", type: "select", options: FILTER_OPTIONS.school_types, schoolKey: "school_type" },
         { key: "religion", label: "Religious character", type: "select", options: FILTER_OPTIONS.religious_characters, schoolKey: "religious_character" },
+        { key: "trust", label: "Academy trust", type: "select", options: FILTER_OPTIONS.trust_names, schoolKey: "trust_name" },
     ];
 
     // Add a "min ..." entry for each demographic field

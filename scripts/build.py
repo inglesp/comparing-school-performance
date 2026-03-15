@@ -13,6 +13,7 @@ import shutil
 from pathlib import Path
 
 DATA_DIR = Path("data/2024-25")
+GIAS_DIR = Path("data/gias/20260312")
 SITE_DIR = Path("_site")
 STATIC_DIR = Path("static")
 
@@ -124,15 +125,28 @@ def load_ks2():
     return ks2
 
 
+def load_gias_trusts():
+    filepath = GIAS_DIR / "edubasealldata20260312.csv"
+    trusts = {}
+    with open(filepath, encoding="cp1252") as f:
+        for row in csv.DictReader(f):
+            trust_name = row.get("Trusts (name)", "").strip()
+            if trust_name:
+                trusts[row["URN"]] = trust_name
+    return trusts
+
+
 def build_data():
     print("Loading CSVs...")
     school_info = load_school_info()
     census = load_census()
     ks2 = load_ks2()
+    gias_trusts = load_gias_trusts()
 
     print(f"  School info: {len(school_info)}")
     print(f"  Census: {len(census)}")
     print(f"  KS2: {len(ks2)}")
+    print(f"  GIAS trusts: {len(gias_trusts)}")
 
     schools = []
     for urn, info in school_info.items():
@@ -142,9 +156,11 @@ def build_data():
         school.update(info)
         school.update(census.get(urn, {}))
         school.update(ks2[urn])
+        school["trust_name"] = gias_trusts.get(urn, "")
         schools.append(school)
 
-    print(f"  Merged: {len(schools)}")
+    trust_count = sum(1 for s in schools if s["trust_name"])
+    print(f"  Merged: {len(schools)} ({trust_count} with trust)")
     return schools
 
 
@@ -154,10 +170,14 @@ def build_filter_options(schools):
     religious_characters = sorted(set(
         s["religious_character"] for s in schools if s["religious_character"]
     ))
+    trust_names = sorted(set(
+        s["trust_name"] for s in schools if s["trust_name"]
+    ))
     return {
         "la_names": la_names,
         "school_types": school_types,
         "religious_characters": religious_characters,
+        "trust_names": trust_names,
     }
 
 
