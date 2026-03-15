@@ -662,9 +662,21 @@
             var groupEl = document.createElement("span");
             groupEl.className = "col-group";
 
-            var groupLabel = document.createElement("span");
+            var groupLabel = document.createElement("button");
+            groupLabel.type = "button";
             groupLabel.className = "col-group-label";
-            groupLabel.textContent = groupName + ": ";
+            groupLabel.textContent = groupName + ":";
+            groupLabel.addEventListener("click", function () {
+                var cols = groupMap[groupName];
+                var allOn = cols.every(function (c) { return visibleColumns.has(c.key); });
+                cols.forEach(function (c) {
+                    if (allOn) visibleColumns.delete(c.key);
+                    else visibleColumns.add(c.key);
+                });
+                renderColumnSelector();
+                renderSelectedTable();
+                pushStateToURL();
+            });
             groupEl.appendChild(groupLabel);
 
             groupMap[groupName].forEach(function (col) {
