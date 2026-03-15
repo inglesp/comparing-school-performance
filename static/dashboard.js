@@ -203,6 +203,10 @@
 
     var OFSTED_GRADE_LABELS = { "1": "1 – Outstanding", "2": "2 – Good", "3": "3 – Requires improvement", "4": "4 – Inadequate" };
     var NF_SORT_ORDER = { "Exceptional": 1, "Strong standard": 2, "Expected standard": 3, "Needs attention": 4, "Urgent improvement": 5 };
+    var NF_LABELS = { 1: "Exceptional", 2: "Strong standard", 3: "Expected standard", 4: "Needs attention", 5: "Urgent improvement" };
+    var NF_FIELDS = ["nf_inclusion", "nf_curriculum", "nf_achievement", "nf_attendance", "nf_personal", "nf_early_years", "nf_leadership"];
+    var OFSTED_FIELDS = ["ofsted_overall", "ofsted_quality", "ofsted_behaviour", "ofsted_personal", "ofsted_leadership", "ofsted_early_years", "ofsted_sixth_form"];
+    var REVERSED_FIELDS = NF_FIELDS.concat(OFSTED_FIELDS);
 
     var FILTER_CATEGORIES = [
         { key: "la", label: "Local authority", group: "School info", type: "select", options: FILTER_OPTIONS.la_names, schoolKey: "la_name" },
@@ -250,7 +254,8 @@
         if (FIELD_LABELS[nf.schoolKey]) {
             FILTER_CATEGORIES.push({
                 key: nf.key, label: nf.label, group: "Ofsted (new framework)", type: "select",
-                options: FILTER_OPTIONS.nf_judgements, schoolKey: nf.schoolKey
+                options: FILTER_OPTIONS.nf_judgements, schoolKey: nf.schoolKey,
+                optionLabels: NF_LABELS, numeric: true
             });
         }
     }
@@ -820,6 +825,8 @@
                     display = "\u2013";
                 } else if (cols[v].fmt === "pct") {
                     display = val.toFixed(1) + "%";
+                } else if (NF_FIELDS.indexOf(cols[v].key) >= 0 && NF_LABELS[val]) {
+                    display = NF_LABELS[val];
                 } else {
                     display = String(val);
                 }
@@ -883,6 +890,16 @@
         fetch(typeof DATA_URL !== "undefined" ? DATA_URL : API_URL)
             .then(function (r) { return r.json(); })
             .then(function (data) {
+                // Convert new framework text values to numeric
+                for (var i = 0; i < data.length; i++) {
+                    for (var j = 0; j < NF_FIELDS.length; j++) {
+                        var f = NF_FIELDS[j];
+                        var v = data[i][f];
+                        if (v != null && NF_SORT_ORDER[v] != null) {
+                            data[i][f] = NF_SORT_ORDER[v];
+                        }
+                    }
+                }
                 allSchools = data;
                 onDataReady();
             });
@@ -971,13 +988,22 @@
         xMax += xPad;
         yMin -= yPad;
         yMax += yPad;
+
+        // Reverse axes for Ofsted fields (high number = weak, should be on left/bottom)
+        if (REVERSED_FIELDS.indexOf(xField) >= 0) {
+            var tmp = xMin; xMin = xMax; xMax = tmp;
+        }
+        if (REVERSED_FIELDS.indexOf(yField) >= 0) {
+            var tmp = yMin; yMin = yMax; yMax = tmp;
+        }
     }
 
     function computeRankData() {
         var field = histField;
+        var reversed = REVERSED_FIELDS.indexOf(field) >= 0;
         rankedSchools = allSchools.filter(function (s) { return s[field] != null; })
             .slice()
-            .sort(function (a, b) { return a[field] - b[field]; });
+            .sort(function (a, b) { return reversed ? b[field] - a[field] : a[field] - b[field]; });
     }
 
     // --- Drawing ---
@@ -1075,7 +1101,7 @@
         ctx.font = "11px -apple-system, sans-serif";
         ctx.textAlign = "center";
 
-        var xTicks = niceTicksFor(xMin, xMax);
+        var xTicks = niceTicksFor(xMin, xMax, xField);
         for (var i = 0; i < xTicks.length; i++) {
             var x = toCanvasX(xTicks[i]);
             ctx.beginPath();
@@ -1084,11 +1110,11 @@
             ctx.strokeStyle = "#eee";
             ctx.stroke();
             ctx.fillStyle = "#666";
-            ctx.fillText(formatTick(xTicks[i]), x, height - PADDING.bottom + 18);
+            ctx.fillText(formatTick(xTicks[i], xField), x, height - PADDING.bottom + 18);
         }
 
         ctx.textAlign = "right";
-        var yTicks = niceTicksFor(yMin, yMax);
+        var yTicks = niceTicksFor(yMin, yMax, yField);
         for (var j = 0; j < yTicks.length; j++) {
             var y = toCanvasY(yTicks[j]);
             ctx.beginPath();
@@ -1097,7 +1123,7 @@
             ctx.strokeStyle = "#eee";
             ctx.stroke();
             ctx.fillStyle = "#666";
-            ctx.fillText(formatTick(yTicks[j]), PADDING.left - 8, y + 4);
+            ctx.fillText(formatTick(yTicks[j], yField), PADDING.left - 8, y + 4);
         }
 
         ctx.fillStyle = "#333";
@@ -1159,7 +1185,7 @@
 
         // Y-axis ticks
         ctx.textAlign = "right";
-        var yTicks = niceTicksFor(vMin, vMax);
+        var yTicks = niceTicksFor(vMin, vMax, histField);
         for (var yt = 0; yt < yTicks.length; yt++) {
             var yy = valToY(yTicks[yt]);
             ctx.beginPath();
@@ -1168,7 +1194,7 @@
             ctx.strokeStyle = "#eee";
             ctx.stroke();
             ctx.fillStyle = "#666";
-            ctx.fillText(formatTick(yTicks[yt]), PADDING.left - 8, yy + 4);
+            ctx.fillText(formatTick(yTicks[yt], histField), PADDING.left - 8, yy + 4);
         }
 
         // Y-axis label
@@ -1379,8 +1405,8 @@
                 "<strong>" + best.name + "</strong><br>" +
                 best.la_name + " \u00b7 " + (best.town || "") + "<br>" +
                 best.school_type + "<br>" +
-                xLabel + ": " + formatValue(best[xField]) + "<br>" +
-                yLabel + ": " + formatValue(best[yField]);
+                xLabel + ": " + formatDisplayValue(xField, best[xField]) + "<br>" +
+                yLabel + ": " + formatDisplayValue(yField, best[yField]);
             tooltip.classList.add("visible");
 
             var tx = mx + 15;
@@ -1444,7 +1470,16 @@
 
     // --- Utilities ---
 
-    function niceTicksFor(min, max) {
+    function niceTicksFor(min, max, field) {
+        // For Ofsted/NF fields, use only integer ticks
+        if (field && REVERSED_FIELDS.indexOf(field) >= 0) {
+            var lo = Math.min(min, max), hi = Math.max(min, max);
+            var ticks = [];
+            for (var i = Math.ceil(lo); i <= Math.floor(hi); i++) ticks.push(i);
+            return ticks;
+        }
+        var reversed = min > max;
+        if (reversed) { var tmp = min; min = max; max = tmp; }
         var range = max - min;
         if (range <= 0) return [min];
         var rough = range / 6;
@@ -1470,7 +1505,17 @@
         return val;
     }
 
-    function formatTick(val) {
+    function formatDisplayValue(field, val) {
+        if (val == null) return "\u2013";
+        if (NF_FIELDS.indexOf(field) >= 0 && NF_LABELS[val]) return NF_LABELS[val];
+        return formatValue(val);
+    }
+
+    var OFSTED_GRADE_TICK_LABELS = { 1: "1 Outstanding", 2: "2 Good", 3: "3 RI", 4: "4 Inadequate" };
+
+    function formatTick(val, field) {
+        if (field && NF_FIELDS.indexOf(field) >= 0 && NF_LABELS[val]) return NF_LABELS[val];
+        if (field && field.indexOf("ofsted_") === 0 && OFSTED_GRADE_TICK_LABELS[val]) return OFSTED_GRADE_TICK_LABELS[val];
         if (Math.abs(val) >= 1000) return val.toLocaleString();
         if (val === Math.floor(val)) return val.toString();
         return val.toFixed(1);

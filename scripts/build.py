@@ -275,10 +275,7 @@ def build_filter_options(schools):
     ))
     ofsted_grades = ["1", "2", "3", "4"]
     ofsted_frameworks = ["Old", "New"]
-    nf_judgements = [
-        "Exceptional", "Strong standard", "Expected standard",
-        "Needs attention", "Urgent improvement",
-    ]
+    nf_judgements = ["1", "2", "3", "4", "5"]
     return {
         "la_names": la_names,
         "school_types": school_types,
