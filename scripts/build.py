@@ -430,10 +430,10 @@ def build_html(*, title, subtitle, help_html, field_labels, demographic_fields,
         <div class="sidebar">
             <div class="controls">
                 <div class="view-toggle">
-                    <button type="button" id="view-hist" class="view-btn active">Rank</button>
-                    <button type="button" id="view-scatter" class="view-btn">Scatter</button>
+                    <button type="button" id="view-scatter" class="view-btn active">Scatter</button>
+                    <button type="button" id="view-hist" class="view-btn">Rank</button>
                 </div>
-                <div id="scatter-controls" class="axis-controls" style="display:none">
+                <div id="scatter-controls" class="axis-controls">
                     <div class="control-group">
                         <label for="x-axis">X axis:</label>
                         <select id="x-axis">
@@ -447,7 +447,7 @@ def build_html(*, title, subtitle, help_html, field_labels, demographic_fields,
                         </select>
                     </div>
                 </div>
-                <div id="hist-controls" class="axis-controls">
+                <div id="hist-controls" class="axis-controls" style="display:none">
                     <div class="control-group">
                         <label for="hist-var">Variable:</label>
                         <select id="hist-var">

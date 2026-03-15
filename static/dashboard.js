@@ -31,7 +31,7 @@
     let canvas, ctx, tooltip;
     let searchInput, searchResults, selectedContainer;
     let width, height, plotW, plotH;
-    let viewMode = "hist";  // "scatter" or "hist"
+    let viewMode = "scatter";  // "scatter" or "hist"
     let histField = "pct_fsm_ever";
     let xField, yField;
     let xMin, xMax, yMin, yMax;
@@ -103,12 +103,12 @@
 
     function restoreStateFromURL() {
         var params = new URLSearchParams(window.location.search);
-        if (params.has("view") && params.get("view") === "scatter") {
-            viewMode = "scatter";
-            document.getElementById("view-scatter").classList.add("active");
-            document.getElementById("view-hist").classList.remove("active");
-            document.getElementById("scatter-controls").style.display = "";
-            document.getElementById("hist-controls").style.display = "none";
+        if (params.has("view") && params.get("view") === "rank") {
+            viewMode = "hist";
+            document.getElementById("view-hist").classList.add("active");
+            document.getElementById("view-scatter").classList.remove("active");
+            document.getElementById("scatter-controls").style.display = "none";
+            document.getElementById("hist-controls").style.display = "";
         }
         if (params.has("x")) setSelectValue("x-axis", params.get("x"));
         if (params.has("y")) setSelectValue("y-axis", params.get("y"));
@@ -167,7 +167,7 @@
 
         var filters = getFilters();
 
-        if (viewMode === "scatter") params.set("view", "scatter");
+        if (viewMode === "hist") params.set("view", "rank");
         if (x !== "pct_fsm_ever") params.set("x", x);
         if (y !== "pct_rwm_expected") params.set("y", y);
         if (hv !== "pct_fsm_ever") params.set("var", hv);
