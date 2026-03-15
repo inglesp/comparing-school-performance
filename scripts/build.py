@@ -12,7 +12,7 @@ import json
 import shutil
 from pathlib import Path
 
-DATA_DIR = Path("data/2024-25")
+DATA_DIR = Path("data/csp/2024-2025")
 GIAS_DIR = Path("data/gias/20260312")
 SITE_DIR = Path("_site")
 STATIC_DIR = Path("static")
