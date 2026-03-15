@@ -6,9 +6,10 @@ Live site: https://inglesp.github.io/comparing-school-performance/
 
 ## Features
 
-- Scatterplot of ~14,500 state-funded primary schools with switchable axes
+- Histogram and scatterplot views of ~14,500 state-funded primary schools with switchable axes
 - Filter by local authority, school type, religious character, and demographic percentiles
 - Search and highlight individual schools
+- National and filtered median lines on charts
 - Sortable comparison table with configurable columns
 - Shareable URLs preserving all state
 

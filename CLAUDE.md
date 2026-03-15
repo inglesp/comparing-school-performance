@@ -15,7 +15,7 @@ Dashboard for exploring primary school performance and demographic data in Engla
 ## Key files
 
 - `scripts/build.py` — reads DfE CSVs from `data/2024-25/`, merges school info + census + KS2 data, generates `_site/` (HTML, JSON, JS, CSS)
-- `static/dashboard.js` — all frontend logic: scatterplot rendering, filters, search, table, URL state sync
+- `static/dashboard.js` — all frontend logic: histogram, scatterplot, filters, search, table, URL state sync
 - `static/style.css` — all styling
 - `justfile` — `just build` and `just serve`
 
@@ -38,7 +38,7 @@ Dashboard for exploring primary school performance and demographic data in Engla
 ## Architecture notes
 
 - `build.py` embeds `FIELD_LABELS`, `DEMOGRAPHIC_FIELDS`, and `FILTER_OPTIONS` as JS variables in the generated HTML
-- All dashboard state is stored in URL query params for shareability (`x`, `y`, `f`, `schools`, `cols`, `sort`)
+- All dashboard state is stored in URL query params for shareability (`x`, `y`, `f`, `schools`, `cols`, `sort`, `view`, `var`)
 - Filters are dynamic: users add/remove filter rows, each with a category dropdown + value control
 - Percentile filters use rank-based calculation (same formula in `schoolPercentile()` and `formatRank()`) to ensure display matches filtering
 - Table shows all filtered schools (capped at 500), sorted by configurable column, with highlighted schools always included
