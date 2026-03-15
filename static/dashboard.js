@@ -202,6 +202,7 @@
     // --- Dynamic filters ---
 
     var OFSTED_GRADE_LABELS = { "1": "1 – Outstanding", "2": "2 – Good", "3": "3 – Requires improvement", "4": "4 – Inadequate" };
+    var NF_SORT_ORDER = { "Exceptional": 1, "Strong standard": 2, "Expected standard": 3, "Needs attention": 4, "Urgent improvement": 5 };
 
     var FILTER_CATEGORIES = [
         { key: "la", label: "Local authority", group: "School info", type: "select", options: FILTER_OPTIONS.la_names, schoolKey: "la_name" },
@@ -209,6 +210,11 @@
         { key: "religion", label: "Religious character", group: "School info", type: "select", options: FILTER_OPTIONS.religious_characters, schoolKey: "religious_character" },
         { key: "trust", label: "Academy trust", group: "School info", type: "select", options: FILTER_OPTIONS.trust_names, schoolKey: "trust_name" },
     ];
+
+    FILTER_CATEGORIES.push({
+        key: "ofsted_framework", label: "Inspection framework", group: "Ofsted", type: "select",
+        options: FILTER_OPTIONS.ofsted_frameworks, schoolKey: "ofsted_framework"
+    });
 
     var OFSTED_FILTER_FIELDS = [
         { key: "ofsted", label: "Overall", schoolKey: "ofsted_overall" },
@@ -223,7 +229,7 @@
         var of_ = OFSTED_FILTER_FIELDS[oi];
         if (FIELD_LABELS[of_.schoolKey]) {
             FILTER_CATEGORIES.push({
-                key: of_.key, label: of_.label, group: "Ofsted", type: "select",
+                key: of_.key, label: of_.label, group: "Ofsted (old framework)", type: "select",
                 options: FILTER_OPTIONS.ofsted_grades, schoolKey: of_.schoolKey,
                 optionLabels: OFSTED_GRADE_LABELS, numeric: true
             });
@@ -708,6 +714,8 @@
             if (av == null) return 1;
             if (bv == null) return -1;
             if (typeof av === "string") {
+                var ao = NF_SORT_ORDER[av], bo = NF_SORT_ORDER[bv];
+                if (ao != null && bo != null) return sortDir ? ao - bo : bo - ao;
                 return sortDir ? av.localeCompare(bv) : bv.localeCompare(av);
             }
             return sortDir ? av - bv : bv - av;

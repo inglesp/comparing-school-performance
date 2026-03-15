@@ -205,14 +205,28 @@ def load_ofsted():
             data["ofsted_early_years"] = parse_ofsted_grade(row.get("Latest OEIF early years provision (where applicable)", ""))
             data["ofsted_sixth_form"] = parse_ofsted_grade(row.get("Latest OEIF sixth form provision (where applicable)", ""))
             # New framework
-            data["nf_safeguarding"] = parse_new_framework(row.get("Safeguarding standards", ""))
-            data["nf_inclusion"] = parse_new_framework(row.get("Inclusion", ""))
-            data["nf_curriculum"] = parse_new_framework(row.get("Curriculum and teaching", ""))
-            data["nf_achievement"] = parse_new_framework(row.get("Achievement", ""))
-            data["nf_attendance"] = parse_new_framework(row.get("Attendance and behaviour", ""))
-            data["nf_personal"] = parse_new_framework(row.get("Personal development and wellbeing", ""))
-            data["nf_early_years"] = parse_new_framework(row.get("Early years (where applicable)", ""))
-            data["nf_leadership"] = parse_new_framework(row.get("Leadership and governance", ""))
+            nf_fields = {
+                "nf_inclusion": parse_new_framework(row.get("Inclusion", "")),
+                "nf_curriculum": parse_new_framework(row.get("Curriculum and teaching", "")),
+                "nf_achievement": parse_new_framework(row.get("Achievement", "")),
+                "nf_attendance": parse_new_framework(row.get("Attendance and behaviour", "")),
+                "nf_personal": parse_new_framework(row.get("Personal development and wellbeing", "")),
+                "nf_early_years": parse_new_framework(row.get("Early years (where applicable)", "")),
+                "nf_leadership": parse_new_framework(row.get("Leadership and governance", "")),
+            }
+            has_new_framework = any(v is not None for v in nf_fields.values())
+            data.update(nf_fields)
+            # If inspected under the new framework, clear OEIF grades
+            data["ofsted_framework"] = "New" if has_new_framework else "Old" if data.get("ofsted_overall") is not None else None
+            # If inspected under the new framework, clear OEIF grades
+            if has_new_framework:
+                data["ofsted_overall"] = None
+                data["ofsted_quality"] = None
+                data["ofsted_behaviour"] = None
+                data["ofsted_personal"] = None
+                data["ofsted_leadership"] = None
+                data["ofsted_early_years"] = None
+                data["ofsted_sixth_form"] = None
             if data:
                 ofsted[urn] = data
     return ofsted
@@ -260,6 +274,7 @@ def build_filter_options(schools):
         s["trust_name"] for s in schools if s["trust_name"]
     ))
     ofsted_grades = ["1", "2", "3", "4"]
+    ofsted_frameworks = ["Old", "New"]
     nf_judgements = [
         "Exceptional", "Strong standard", "Expected standard",
         "Needs attention", "Urgent improvement",
@@ -270,6 +285,7 @@ def build_filter_options(schools):
         "religious_characters": religious_characters,
         "trust_names": trust_names,
         "ofsted_grades": ofsted_grades,
+        "ofsted_frameworks": ofsted_frameworks,
         "nf_judgements": nf_judgements,
     }
 
