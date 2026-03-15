@@ -235,9 +235,9 @@ ATTAINMENT_FIELDS = [
 
 
 FIELD_GROUPS = [
+    ("School info", ["number_on_roll", "eligible_pupils"]),
     ("Demographics", [
-        "pct_fsm_ever", "pct_eal", "pct_sen", "pct_sen_support",
-        "pct_sen_ehcp", "number_on_roll", "eligible_pupils",
+        "pct_fsm_ever", "pct_eal", "pct_sen", "pct_sen_support", "pct_sen_ehcp",
     ]),
     ("Attainment (expected)", [
         "pct_rwm_expected", "pct_reading_expected", "pct_writing_expected",
