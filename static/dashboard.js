@@ -921,9 +921,7 @@
 
     function computeRankData() {
         var field = histField;
-        var filterActive = getFilters().length > 0;
-        var source = filterActive ? filteredSchools : allSchools;
-        rankedSchools = source.filter(function (s) { return s[field] != null; })
+        rankedSchools = allSchools.filter(function (s) { return s[field] != null; })
             .slice()
             .sort(function (a, b) { return a[field] - b[field]; });
     }
@@ -1083,12 +1081,6 @@
             return PADDING.top + plotH - ((val - vMin) / (vMax - vMin)) * plotH;
         }
 
-        // Store for hover
-        rankToXFn = rankToX;
-        rankValToYFn = valToY;
-        rankVMin = vMin;
-        rankVMax = vMax;
-
         // X-axis label (rank)
         ctx.fillStyle = "#333";
         ctx.font = "12px -apple-system, sans-serif";
@@ -1137,16 +1129,44 @@
 
         // Draw lines for each school
         var baseline = PADDING.top + plotH;
-        ctx.strokeStyle = "rgba(51, 119, 204, 0.4)";
-        ctx.lineWidth = Math.max(1, plotW / n);
+        var filterActive = getFilters().length > 0;
+        var filteredSet = null;
+        if (filterActive) {
+            filteredSet = new Set();
+            for (var fi = 0; fi < filteredSchools.length; fi++) {
+                filteredSet.add(filteredSchools[fi].urn);
+            }
+        }
+        var lw = Math.max(1, plotW / n);
+
+        // First pass: grey lines for unfiltered schools (or all if no filter)
         for (var i = 0; i < n; i++) {
             if (selectedUrns.has(rankedSchools[i].urn)) continue;
+            if (filterActive && filteredSet.has(rankedSchools[i].urn)) continue;
             var x = rankToX(i);
             var y = valToY(rankedSchools[i][field]);
+            ctx.strokeStyle = filterActive ? "rgba(180, 180, 180, 0.3)" : "rgba(51, 119, 204, 0.4)";
+            ctx.lineWidth = lw;
             ctx.beginPath();
             ctx.moveTo(x, baseline);
             ctx.lineTo(x, y);
             ctx.stroke();
+        }
+
+        // Second pass: blue lines for filtered schools
+        if (filterActive) {
+            for (var i2 = 0; i2 < n; i2++) {
+                if (selectedUrns.has(rankedSchools[i2].urn)) continue;
+                if (!filteredSet.has(rankedSchools[i2].urn)) continue;
+                var x2 = rankToX(i2);
+                var y2 = valToY(rankedSchools[i2][field]);
+                ctx.strokeStyle = "rgba(51, 119, 204, 0.4)";
+                ctx.lineWidth = lw;
+                ctx.beginPath();
+                ctx.moveTo(x2, baseline);
+                ctx.lineTo(x2, y2);
+                ctx.stroke();
+            }
         }
 
         // Draw median lines (horizontal)
@@ -1162,7 +1182,6 @@
             ctx.stroke();
             ctx.restore();
         }
-        var filterActive = getFilters().length > 0;
         if (filterActive) {
             var filtMed = computeMedian(filteredSchools, field);
             if (filtMed != null) {
@@ -1199,26 +1218,8 @@
             ctx.fillText(s.name, sx + 4, sy - 4);
         }
 
-        // Draw hovered school
-        if (hoveredSchool && !selectedUrns.has(hoveredSchool.urn)) {
-            var hi = rankedSchools.indexOf(hoveredSchool);
-            if (hi >= 0) {
-                var hx = rankToX(hi);
-                var hy = valToY(hoveredSchool[field]);
-                ctx.strokeStyle = "rgba(220, 50, 50, 0.9)";
-                ctx.lineWidth = Math.max(3, plotW / n + 1);
-                ctx.beginPath();
-                ctx.moveTo(hx, baseline);
-                ctx.lineTo(hx, hy);
-                ctx.stroke();
-            }
-        }
     }
 
-    var rankToXFn = null;
-    var rankValToYFn = null;
-    var rankVMin = 0;
-    var rankVMax = 100;
 
     function updateLegend() {
         var legend = document.getElementById("chart-legend");
@@ -1231,12 +1232,29 @@
     }
 
     function drawDots() {
+        var filterActive = getFilters().length > 0;
+        var allValid = allSchools.filter(function (s) {
+            return s[xField] != null && s[yField] != null;
+        });
+
+        // Grey dots for all schools (when filtering)
+        if (filterActive) {
+            ctx.fillStyle = "rgba(180, 180, 180, 0.25)";
+            for (var a = 0; a < allValid.length; a++) {
+                if (selectedUrns.has(allValid[a].urn)) continue;
+                ctx.beginPath();
+                ctx.arc(toCanvasX(allValid[a][xField]), toCanvasY(allValid[a][yField]), DOT_RADIUS, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        // Blue dots for filtered schools (or all if no filter)
         ctx.fillStyle = "rgba(51, 119, 204, 0.35)";
         for (var k = 0; k < filteredSchools.length; k++) {
             var su = filteredSchools[k];
             if (selectedUrns.has(su.urn)) continue;
             ctx.beginPath();
-            ctx.arc(toCanvasX(su[xField]), toCanvasY(su[yField]), DOT_RADIUS, 0, Math.PI * 2);
+            ctx.arc(toCanvasX(su[xField]), toCanvasY(su[yField]), filterActive ? HIGHLIGHT_RADIUS : DOT_RADIUS, 0, Math.PI * 2);
             ctx.fill();
         }
 
@@ -1280,14 +1298,11 @@
         var mx = e.clientX - rect.left;
         var my = e.clientY - rect.top;
 
-        if (viewMode === "hist") {
-            onRankMouseMove(mx, my);
-            return;
-        }
+        if (viewMode === "hist") return;
 
         var bestDist = Infinity;
         var best = null;
-        var schools = filteredSchools.length > 0 ? filteredSchools : [];
+        var schools = filteredSchools;
         for (var i = 0; i < schools.length; i++) {
             var s = schools[i];
             if (s[xField] == null || s[yField] == null) continue;
@@ -1325,45 +1340,6 @@
         }
     }
 
-    function onRankMouseMove(mx, my) {
-        if (!rankToXFn || rankedSchools.length === 0) return;
-        if (mx < PADDING.left || mx > PADDING.left + plotW || my < PADDING.top || my > PADDING.top + plotH) {
-            if (hoveredSchool) { hoveredSchool = null; draw(); }
-            tooltip.classList.remove("visible");
-            return;
-        }
-
-        // Find nearest school by x position
-        var n = rankedSchools.length;
-        var frac = (mx - PADDING.left) / plotW;
-        var idx = Math.round(frac * (n - 1));
-        idx = Math.max(0, Math.min(n - 1, idx));
-        var best = rankedSchools[idx];
-
-        if (best !== hoveredSchool) {
-            hoveredSchool = best;
-            draw();
-        }
-
-        if (best) {
-            var field = histField;
-            var label = FIELD_LABELS[field] || field;
-            tooltip.innerHTML =
-                "<strong>" + best.name + "</strong><br>" +
-                best.la_name + " \u00b7 " + (best.town || "") + "<br>" +
-                best.school_type + "<br>" +
-                label + ": " + formatValue(best[field]) + "<br>" +
-                "Rank: " + (idx + 1) + " / " + n;
-            tooltip.classList.add("visible");
-
-            var tx = mx + 15;
-            var ty = my - 10;
-            if (tx + 300 > width) tx = mx - 260;
-            if (ty < 0) ty = my + 15;
-            tooltip.style.left = tx + "px";
-            tooltip.style.top = ty + "px";
-        }
-    }
 
     function onCanvasClick() {
         if (hoveredSchool) {
