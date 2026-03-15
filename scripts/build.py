@@ -670,10 +670,28 @@ KS2_HELP = """\
     <dd>Percentage of pupils receiving SEN support (the lower tier, without an EHCP).</dd>
     <dt>% SEN EHCP</dt>
     <dd>Percentage of pupils with an Education, Health and Care Plan (the most significant needs).</dd>
+    <dt>IDACI quintile</dt>
+    <dd>Income Deprivation Affecting Children Index quintile (1 = most deprived, 5 = least deprived). From Ofsted management information.</dd>
     <dt>Number on roll</dt>
     <dd>Total number of pupils at the school (from school census).</dd>
     <dt>Eligible pupils (KS2)</dt>
     <dd>Number of pupils included in KS2 performance measures (typically Year 6).</dd>
+</dl>
+
+<h3>Ofsted (old framework)</h3>
+<p>Grades from the most recent inspection under the OEIF (pre-September 2025) framework.
+Schools inspected under the new framework will not have these grades.</p>
+<dl>
+    <dt>Overall / Quality of education / Behaviour / Personal development / Leadership / Early years</dt>
+    <dd>Grades 1 (Outstanding) to 4 (Inadequate).</dd>
+</dl>
+
+<h3>Ofsted (new framework)</h3>
+<p>Judgements from inspections under the new framework (from September 2025).
+Only a small number of schools have been inspected so far.</p>
+<dl>
+    <dt>Inclusion / Curriculum & teaching / Achievement / Attendance / Personal development / Early years / Leadership</dt>
+    <dd>Rated as Exceptional, Strong standard, Expected standard, Needs attention, or Urgent improvement.</dd>
 </dl>
 
 <h3>Attainment</h3>
@@ -721,10 +739,28 @@ KS4_HELP = """\
     <dd>Percentage of pupils receiving SEN support (the lower tier, without an EHCP).</dd>
     <dt>% SEN EHCP</dt>
     <dd>Percentage of pupils with an Education, Health and Care Plan (the most significant needs).</dd>
+    <dt>IDACI quintile</dt>
+    <dd>Income Deprivation Affecting Children Index quintile (1 = most deprived, 5 = least deprived). From Ofsted management information.</dd>
     <dt>Number on roll</dt>
     <dd>Total number of pupils at the school (from school census).</dd>
     <dt>KS4 pupils</dt>
     <dd>Number of pupils at the end of Key Stage 4 included in performance measures.</dd>
+</dl>
+
+<h3>Ofsted (old framework)</h3>
+<p>Grades from the most recent inspection under the OEIF (pre-September 2025) framework.
+Schools inspected under the new framework will not have these grades.</p>
+<dl>
+    <dt>Overall / Quality of education / Behaviour / Personal development / Leadership / Sixth form</dt>
+    <dd>Grades 1 (Outstanding) to 4 (Inadequate).</dd>
+</dl>
+
+<h3>Ofsted (new framework)</h3>
+<p>Judgements from inspections under the new framework (from September 2025).
+Only a small number of schools have been inspected so far.</p>
+<dl>
+    <dt>Inclusion / Curriculum & teaching / Achievement / Attendance / Personal development / Leadership</dt>
+    <dd>Rated as Exceptional, Strong standard, Expected standard, Needs attention, or Urgent improvement.</dd>
 </dl>
 
 <h3>Attainment 8</h3>
@@ -737,12 +773,16 @@ English (double weighted), Maths (double weighted), 3 EBacc subjects, and 3 open
     <dd>Average score for each Attainment 8 element.</dd>
 </dl>
 
-<h3>Basics & EBacc</h3>
+<h3>Basics</h3>
 <dl>
     <dt>% Basics 9-4 (standard pass)</dt>
     <dd>Percentage achieving grade 4+ in both English and Maths GCSE.</dd>
     <dt>% Basics 9-5 (strong pass)</dt>
     <dd>Percentage achieving grade 5+ in both English and Maths GCSE.</dd>
+</dl>
+
+<h3>EBacc</h3>
+<dl>
     <dt>% entering EBacc</dt>
     <dd>Percentage entered for the English Baccalaureate (English, Maths, Sciences, a language, and History or Geography).</dd>
     <dt>% EBacc 9-4 / 9-5</dt>
@@ -825,7 +865,7 @@ def main():
         defaults=KS2_DEFAULTS,
         table_columns=KS2_TABLE_COLUMNS,
         title="Primary School Performance and Demographics 2024-25",
-        subtitle='Data from the DfE\'s <a href="https://www.compare-school-performance.service.gov.uk/" target="_blank" rel="noopener">compare school performance</a> service for 2024-25. Covers state-funded primary schools in England with KS2 results.',
+        subtitle='Data from the DfE\'s <a href="https://www.compare-school-performance.service.gov.uk/" target="_blank" rel="noopener">compare school performance</a> service (2024-25), <a href="https://get-information-schools.service.gov.uk/" target="_blank" rel="noopener">GIAS</a>, and <a href="https://www.gov.uk/government/statistical-data-sets/monthly-management-information-ofsteds-school-inspections-outcomes" target="_blank" rel="noopener">Ofsted</a>. Covers state-funded primary schools in England with KS2 results.',
         help_html=KS2_HELP,
         nav_html=nav_html,
     )
@@ -850,7 +890,7 @@ def main():
         defaults=KS4_DEFAULTS,
         table_columns=KS4_TABLE_COLUMNS,
         title="Secondary School Performance and Demographics 2024-25",
-        subtitle='Data from the DfE\'s <a href="https://www.compare-school-performance.service.gov.uk/" target="_blank" rel="noopener">compare school performance</a> service for 2024-25. Covers state-funded secondary schools in England with KS4 results.',
+        subtitle='Data from the DfE\'s <a href="https://www.compare-school-performance.service.gov.uk/" target="_blank" rel="noopener">compare school performance</a> service (2024-25), <a href="https://get-information-schools.service.gov.uk/" target="_blank" rel="noopener">GIAS</a>, and <a href="https://www.gov.uk/government/statistical-data-sets/monthly-management-information-ofsteds-school-inspections-outcomes" target="_blank" rel="noopener">Ofsted</a>. Covers state-funded secondary schools in England with KS4 results.',
         help_html=KS4_HELP,
         nav_html=nav_html,
     )
