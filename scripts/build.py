@@ -158,6 +158,15 @@ def load_ks4():
     return ks4
 
 
+def parse_date(val):
+    """Parse DD/MM/YYYY to YYYY-MM-DD string for sorting."""
+    try:
+        parts = val.strip().split("/")
+        return f"{parts[2]}-{parts[1]}-{parts[0]}"
+    except (IndexError, ValueError):
+        return None
+
+
 def parse_ofsted_grade(val):
     """Parse an Ofsted grade: 1-4 are valid, everything else is null."""
     if not val or val in ("NULL", "Not judged", "9", "0"):
@@ -196,6 +205,13 @@ def load_ofsted():
             idaci = parse_int(row.get("The income deprivation affecting children index (IDACI) quintile", ""))
             if idaci is not None:
                 data["idaci_quintile"] = idaci
+            # Inspection dates
+            oeif_date = row.get("Inspection start date of latest OEIF graded inspection", "").strip()
+            nf_date = row.get("Inspection start date", "").strip()
+            if oeif_date and oeif_date != "NULL":
+                data["ofsted_date"] = parse_date(oeif_date)
+            if nf_date and nf_date != "NULL":
+                data["nf_date"] = parse_date(nf_date)
             # OEIF graded inspection
             data["ofsted_overall"] = parse_ofsted_grade(row.get("Latest OEIF overall effectiveness", ""))
             data["ofsted_quality"] = parse_ofsted_grade(row.get("Latest OEIF quality of education", ""))
@@ -227,6 +243,7 @@ def load_ofsted():
                 data["ofsted_leadership"] = None
                 data["ofsted_early_years"] = None
                 data["ofsted_sixth_form"] = None
+                data["ofsted_date"] = None  # clear old date
             if data:
                 ofsted[urn] = data
     return ofsted
@@ -383,6 +400,7 @@ KS2_TABLE_COLUMNS = [
     {"group": "Ofsted", "key": "ofsted_personal", "label": "Personal"},
     {"group": "Ofsted", "key": "ofsted_leadership", "label": "Leadership"},
     {"group": "Ofsted", "key": "ofsted_early_years", "label": "Early yrs"},
+    {"group": "Ofsted", "key": "ofsted_date", "label": "Date"},
     {"group": "Ofsted (new)", "key": "nf_inclusion", "label": "Inclusion"},
     {"group": "Ofsted (new)", "key": "nf_curriculum", "label": "Curriculum"},
     {"group": "Ofsted (new)", "key": "nf_achievement", "label": "Achievement"},
@@ -390,6 +408,7 @@ KS2_TABLE_COLUMNS = [
     {"group": "Ofsted (new)", "key": "nf_personal", "label": "Personal"},
     {"group": "Ofsted (new)", "key": "nf_early_years", "label": "Early yrs"},
     {"group": "Ofsted (new)", "key": "nf_leadership", "label": "Leadership"},
+    {"group": "Ofsted (new)", "key": "nf_date", "label": "Date"},
     {"group": "Attainment (expected)", "key": "pct_rwm_expected", "label": "% RWM exp", "fmt": "pct", "rank": True, "defaultOn": True},
     {"group": "Attainment (expected)", "key": "pct_reading_expected", "label": "% read exp", "fmt": "pct", "rank": True, "defaultOn": True},
     {"group": "Attainment (expected)", "key": "pct_writing_expected", "label": "% write exp", "fmt": "pct", "rank": True, "defaultOn": True},
@@ -503,12 +522,14 @@ KS4_TABLE_COLUMNS = [
     {"group": "Ofsted", "key": "ofsted_personal", "label": "Personal"},
     {"group": "Ofsted", "key": "ofsted_leadership", "label": "Leadership"},
     {"group": "Ofsted", "key": "ofsted_sixth_form", "label": "Sixth form"},
+    {"group": "Ofsted", "key": "ofsted_date", "label": "Date"},
     {"group": "Ofsted (new)", "key": "nf_inclusion", "label": "Inclusion"},
     {"group": "Ofsted (new)", "key": "nf_curriculum", "label": "Curriculum"},
     {"group": "Ofsted (new)", "key": "nf_achievement", "label": "Achievement"},
     {"group": "Ofsted (new)", "key": "nf_attendance", "label": "Attendance"},
     {"group": "Ofsted (new)", "key": "nf_personal", "label": "Personal"},
     {"group": "Ofsted (new)", "key": "nf_leadership", "label": "Leadership"},
+    {"group": "Ofsted (new)", "key": "nf_date", "label": "Date"},
     {"group": "Attainment 8", "key": "att8", "label": "Att 8", "rank": True, "defaultOn": True},
     {"group": "Attainment 8", "key": "att8_english", "label": "Att 8 Eng", "rank": True, "defaultOn": True},
     {"group": "Attainment 8", "key": "att8_maths", "label": "Att 8 Mat", "rank": True, "defaultOn": True},
