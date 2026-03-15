@@ -158,8 +158,19 @@ def load_ks4():
     return ks4
 
 
+def parse_ofsted_grade(val):
+    """Parse an Ofsted grade: 1-4 are valid, everything else is null."""
+    if not val or val in ("NULL", "Not judged", "9", "0"):
+        return None
+    try:
+        g = int(val)
+        return g if 1 <= g <= 4 else None
+    except ValueError:
+        return None
+
+
 def load_ofsted():
-    """Load IDACI quintile from Ofsted management information."""
+    """Load IDACI quintile and Ofsted judgements from management information."""
     ofsted = {}
     with open(OFSTED_CSV, encoding="cp1252") as f:
         next(f)  # skip title row
@@ -168,9 +179,19 @@ def load_ofsted():
             urn = row.get("URN", "").strip()
             if not urn:
                 continue
+            data = {}
             idaci = parse_int(row.get("The income deprivation affecting children index (IDACI) quintile", ""))
             if idaci is not None:
-                ofsted[urn] = {"idaci_quintile": idaci}
+                data["idaci_quintile"] = idaci
+            data["ofsted_overall"] = parse_ofsted_grade(row.get("Latest OEIF overall effectiveness", ""))
+            data["ofsted_quality"] = parse_ofsted_grade(row.get("Latest OEIF quality of education", ""))
+            data["ofsted_behaviour"] = parse_ofsted_grade(row.get("Latest OEIF behaviour and attitudes", ""))
+            data["ofsted_personal"] = parse_ofsted_grade(row.get("Latest OEIF personal development", ""))
+            data["ofsted_leadership"] = parse_ofsted_grade(row.get("Latest OEIF effectiveness of leadership and management", ""))
+            data["ofsted_early_years"] = parse_ofsted_grade(row.get("Latest OEIF early years provision (where applicable)", ""))
+            data["ofsted_sixth_form"] = parse_ofsted_grade(row.get("Latest OEIF sixth form provision (where applicable)", ""))
+            if data:
+                ofsted[urn] = data
     return ofsted
 
 
@@ -215,11 +236,13 @@ def build_filter_options(schools):
     trust_names = sorted(set(
         s["trust_name"] for s in schools if s["trust_name"]
     ))
+    ofsted_grades = ["1", "2", "3", "4"]
     return {
         "la_names": la_names,
         "school_types": school_types,
         "religious_characters": religious_characters,
         "trust_names": trust_names,
+        "ofsted_grades": ofsted_grades,
     }
 
 
@@ -234,6 +257,12 @@ KS2_FIELD_LABELS = {
     "pct_sen_support": "% SEN support",
     "pct_sen_ehcp": "% SEN EHCP",
     "idaci_quintile": "IDACI quintile",
+    "ofsted_overall": "Ofsted overall",
+    "ofsted_quality": "Ofsted quality of education",
+    "ofsted_behaviour": "Ofsted behaviour & attitudes",
+    "ofsted_personal": "Ofsted personal development",
+    "ofsted_leadership": "Ofsted leadership & management",
+    "ofsted_early_years": "Ofsted early years",
     "number_on_roll": "Number on roll",
     "eligible_pupils": "Eligible pupils (KS2)",
     "pct_rwm_expected": "% RWM expected",
@@ -265,6 +294,10 @@ KS2_FIELD_GROUPS = [
         "pct_fsm_ever", "pct_eal", "pct_sen", "pct_sen_support", "pct_sen_ehcp",
         "idaci_quintile",
     ]),
+    ("Ofsted", [
+        "ofsted_overall", "ofsted_quality", "ofsted_behaviour",
+        "ofsted_personal", "ofsted_leadership", "ofsted_early_years",
+    ]),
     ("Attainment (expected)", [
         "pct_rwm_expected", "pct_reading_expected", "pct_writing_expected",
         "pct_maths_expected", "pct_gps_expected",
@@ -292,6 +325,12 @@ KS2_TABLE_COLUMNS = [
     {"group": "Demographics", "key": "pct_sen_support", "label": "% SEN sup", "fmt": "pct", "rank": True, "defaultOn": True},
     {"group": "Demographics", "key": "pct_sen_ehcp", "label": "% EHCP", "fmt": "pct", "rank": True, "defaultOn": True},
     {"group": "Demographics", "key": "idaci_quintile", "label": "IDACI", "rank": True, "defaultOn": True},
+    {"group": "Ofsted", "key": "ofsted_overall", "label": "Overall", "headerLabel": "Ofsted", "rank": True, "defaultOn": True},
+    {"group": "Ofsted", "key": "ofsted_quality", "label": "Quality", "rank": True},
+    {"group": "Ofsted", "key": "ofsted_behaviour", "label": "Behaviour", "rank": True},
+    {"group": "Ofsted", "key": "ofsted_personal", "label": "Personal", "rank": True},
+    {"group": "Ofsted", "key": "ofsted_leadership", "label": "Leadership", "rank": True},
+    {"group": "Ofsted", "key": "ofsted_early_years", "label": "Early yrs", "rank": True},
     {"group": "Attainment (expected)", "key": "pct_rwm_expected", "label": "% RWM exp", "fmt": "pct", "rank": True, "defaultOn": True},
     {"group": "Attainment (expected)", "key": "pct_reading_expected", "label": "% read exp", "fmt": "pct", "rank": True, "defaultOn": True},
     {"group": "Attainment (expected)", "key": "pct_writing_expected", "label": "% write exp", "fmt": "pct", "rank": True, "defaultOn": True},
@@ -328,6 +367,12 @@ KS4_FIELD_LABELS = {
     "pct_sen_support": "% SEN support",
     "pct_sen_ehcp": "% SEN EHCP",
     "idaci_quintile": "IDACI quintile",
+    "ofsted_overall": "Ofsted overall",
+    "ofsted_quality": "Ofsted quality of education",
+    "ofsted_behaviour": "Ofsted behaviour & attitudes",
+    "ofsted_personal": "Ofsted personal development",
+    "ofsted_leadership": "Ofsted leadership & management",
+    "ofsted_sixth_form": "Ofsted sixth form",
     "number_on_roll": "Number on roll",
     "ks4_pupils": "KS4 pupils",
     "att8": "Attainment 8",
@@ -356,6 +401,10 @@ KS4_FIELD_GROUPS = [
         "pct_fsm_ever", "pct_eal", "pct_sen", "pct_sen_support", "pct_sen_ehcp",
         "idaci_quintile",
     ]),
+    ("Ofsted", [
+        "ofsted_overall", "ofsted_quality", "ofsted_behaviour",
+        "ofsted_personal", "ofsted_leadership", "ofsted_sixth_form",
+    ]),
     ("Attainment 8", [
         "att8", "att8_english", "att8_maths", "att8_ebacc", "att8_open",
     ]),
@@ -379,6 +428,12 @@ KS4_TABLE_COLUMNS = [
     {"group": "Demographics", "key": "pct_sen_support", "label": "% SEN sup", "fmt": "pct", "rank": True, "defaultOn": True},
     {"group": "Demographics", "key": "pct_sen_ehcp", "label": "% EHCP", "fmt": "pct", "rank": True, "defaultOn": True},
     {"group": "Demographics", "key": "idaci_quintile", "label": "IDACI", "rank": True, "defaultOn": True},
+    {"group": "Ofsted", "key": "ofsted_overall", "label": "Overall", "headerLabel": "Ofsted", "rank": True, "defaultOn": True},
+    {"group": "Ofsted", "key": "ofsted_quality", "label": "Quality", "rank": True},
+    {"group": "Ofsted", "key": "ofsted_behaviour", "label": "Behaviour", "rank": True},
+    {"group": "Ofsted", "key": "ofsted_personal", "label": "Personal", "rank": True},
+    {"group": "Ofsted", "key": "ofsted_leadership", "label": "Leadership", "rank": True},
+    {"group": "Ofsted", "key": "ofsted_sixth_form", "label": "Sixth form", "rank": True},
     {"group": "Attainment 8", "key": "att8", "label": "Att 8", "rank": True, "defaultOn": True},
     {"group": "Attainment 8", "key": "att8_english", "label": "Att 8 Eng", "rank": True, "defaultOn": True},
     {"group": "Attainment 8", "key": "att8_maths", "label": "Att 8 Mat", "rank": True, "defaultOn": True},

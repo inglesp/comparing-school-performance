@@ -201,12 +201,34 @@
 
     // --- Dynamic filters ---
 
+    var OFSTED_GRADE_LABELS = { "1": "1 – Outstanding", "2": "2 – Good", "3": "3 – Requires improvement", "4": "4 – Inadequate" };
+
     var FILTER_CATEGORIES = [
         { key: "la", label: "Local authority", type: "select", options: FILTER_OPTIONS.la_names, schoolKey: "la_name" },
         { key: "type", label: "School type", type: "select", options: FILTER_OPTIONS.school_types, schoolKey: "school_type" },
         { key: "religion", label: "Religious character", type: "select", options: FILTER_OPTIONS.religious_characters, schoolKey: "religious_character" },
         { key: "trust", label: "Academy trust", type: "select", options: FILTER_OPTIONS.trust_names, schoolKey: "trust_name" },
     ];
+
+    var OFSTED_FILTER_FIELDS = [
+        { key: "ofsted", label: "Ofsted overall", schoolKey: "ofsted_overall" },
+        { key: "ofsted_quality", label: "Ofsted quality of education", schoolKey: "ofsted_quality" },
+        { key: "ofsted_behaviour", label: "Ofsted behaviour & attitudes", schoolKey: "ofsted_behaviour" },
+        { key: "ofsted_personal", label: "Ofsted personal development", schoolKey: "ofsted_personal" },
+        { key: "ofsted_leadership", label: "Ofsted leadership & management", schoolKey: "ofsted_leadership" },
+        { key: "ofsted_early_years", label: "Ofsted early years", schoolKey: "ofsted_early_years" },
+        { key: "ofsted_sixth_form", label: "Ofsted sixth form", schoolKey: "ofsted_sixth_form" },
+    ];
+    for (var oi = 0; oi < OFSTED_FILTER_FIELDS.length; oi++) {
+        var of_ = OFSTED_FILTER_FIELDS[oi];
+        if (FIELD_LABELS[of_.schoolKey]) {
+            FILTER_CATEGORIES.push({
+                key: of_.key, label: of_.label, type: "select",
+                options: FILTER_OPTIONS.ofsted_grades, schoolKey: of_.schoolKey,
+                optionLabels: OFSTED_GRADE_LABELS, numeric: true
+            });
+        }
+    }
 
     // Add a "min ..." entry for each demographic field
     for (var di = 0; di < DEMOGRAPHIC_FIELDS.length; di++) {
@@ -252,7 +274,7 @@
                 for (var j = 0; j < catDef.options.length; j++) {
                     var o = document.createElement("option");
                     o.value = catDef.options[j];
-                    o.textContent = catDef.options[j];
+                    o.textContent = catDef.optionLabels ? catDef.optionLabels[catDef.options[j]] || catDef.options[j] : catDef.options[j];
                     if (catDef.options[j] === value) o.selected = true;
                     valSelect.appendChild(o);
                 }
@@ -350,7 +372,7 @@
             if (catDef.type === "select") {
                 var selects = rows[i].querySelectorAll(".filter-value-container select");
                 var val = selects.length ? selects[0].value : "";
-                if (val) filters.push({ type: "match", key: catDef.key, schoolKey: catDef.schoolKey, value: val });
+                if (val) filters.push({ type: "match", key: catDef.key, schoolKey: catDef.schoolKey, value: val, numeric: !!catDef.numeric });
             } else if (catDef.type === "percentile") {
                 var sliders = rows[i].querySelectorAll(".dual-slider input");
                 if (sliders.length === 2) {
@@ -545,9 +567,47 @@
         return "p" + pctile;
     }
 
+    var columnSelectorOpen = false;
+
     function renderColumnSelector() {
         var container = document.getElementById("column-selector");
         container.innerHTML = "";
+
+        var header = document.createElement("div");
+        header.className = "col-selector-header";
+
+        var toggleBtn = document.createElement("button");
+        toggleBtn.type = "button";
+        toggleBtn.className = "col-selector-toggle";
+        toggleBtn.textContent = (columnSelectorOpen ? "\u25bc" : "\u25b6") + " Table columns";
+        toggleBtn.addEventListener("click", function () {
+            columnSelectorOpen = !columnSelectorOpen;
+            renderColumnSelector();
+        });
+        header.appendChild(toggleBtn);
+
+        // Selected-only toggle (always visible)
+        if (selectedUrns.size > 0) {
+            var toggleLabel = document.createElement("label");
+            toggleLabel.className = "col-toggle selected-only-toggle";
+            var toggleCb = document.createElement("input");
+            toggleCb.type = "checkbox";
+            toggleCb.checked = tableSelectedOnly;
+            toggleCb.addEventListener("change", function () {
+                tableSelectedOnly = toggleCb.checked;
+                renderSelectedTable();
+            });
+            toggleLabel.appendChild(toggleCb);
+            toggleLabel.appendChild(document.createTextNode(" Highlighted only"));
+            header.appendChild(toggleLabel);
+        }
+
+        container.appendChild(header);
+
+        if (!columnSelectorOpen) return;
+
+        var body = document.createElement("div");
+        body.className = "col-selector-body";
 
         var groups = [];
         var groupMap = {};
@@ -588,24 +648,10 @@
                 groupEl.appendChild(label);
             });
 
-            container.appendChild(groupEl);
+            body.appendChild(groupEl);
         });
 
-        // Selected-only toggle
-        if (selectedUrns.size > 0) {
-            var toggleLabel = document.createElement("label");
-            toggleLabel.className = "col-toggle selected-only-toggle";
-            var toggleCb = document.createElement("input");
-            toggleCb.type = "checkbox";
-            toggleCb.checked = tableSelectedOnly;
-            toggleCb.addEventListener("change", function () {
-                tableSelectedOnly = toggleCb.checked;
-                renderSelectedTable();
-            });
-            toggleLabel.appendChild(toggleCb);
-            toggleLabel.appendChild(document.createTextNode(" Highlighted only"));
-            container.appendChild(toggleLabel);
-        }
+        container.appendChild(body);
     }
 
     var TABLE_MAX_ROWS = 500;
@@ -700,7 +746,7 @@
         var html = "<table><thead><tr><th class='rank-col'>#</th><th class='school-name-col sortable' data-sort-key='name'>School" + nameArrow + "</th>";
         for (var c = 0; c < cols.length; c++) {
             var arrow = (sortKey === cols[c].key) ? (sortDir ? " \u25b2" : " \u25bc") : "";
-            html += "<th class='sortable' data-sort-key='" + cols[c].key + "'>" + cols[c].label + arrow + "</th>";
+            html += "<th class='sortable' data-sort-key='" + cols[c].key + "'>" + (cols[c].headerLabel || cols[c].label) + arrow + "</th>";
         }
         html += "</tr></thead><tbody>";
 
@@ -851,7 +897,7 @@
             for (var i = 0; i < resolvedFilters.length; i++) {
                 var f = resolvedFilters[i];
                 if (f.type === "match") {
-                    if (s[f.schoolKey] !== f.value) return false;
+                    if (f.numeric ? s[f.schoolKey] !== Number(f.value) : s[f.schoolKey] !== f.value) return false;
                 } else if (f.type === "percentile") {
                     var pct = schoolPercentile(f.ranks, s.urn);
                     if (pct == null || pct < f.lo || pct > f.hi) return false;
