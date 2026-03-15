@@ -63,9 +63,8 @@
     let histField = "pct_fsm_ever";
     let xField, yField;
     let xMin, xMax, yMin, yMax;
-    let histBins = [];  // computed bins for histogram
+    let rankedSchools = [];  // sorted schools for rank plot
     let hoveredSchool = null;
-    let hoveredBin = null;
     let dpr = window.devicePixelRatio || 1;
     let activeResultIndex = -1;
 
@@ -654,7 +653,8 @@
         }
 
         // Build school list
-        var sortKey = tableSortKey || xField;
+        var defaultSortKey = viewMode === "hist" ? histField : xField;
+        var sortKey = tableSortKey || defaultSortKey;
         var sortDir = tableSortKey ? tableSortAsc : false;
         var sortFn = function (a, b) {
             var av = a[sortKey], bv = b[sortKey];
@@ -793,7 +793,7 @@
             th.addEventListener("click", function (e) {
                 e.stopPropagation();
                 var key = th.getAttribute("data-sort-key");
-                var effectiveKey = tableSortKey || xField;
+                var effectiveKey = tableSortKey || (viewMode === "hist" ? histField : xField);
                 if (effectiveKey === key) {
                     tableSortAsc = !tableSortAsc;
                 } else {
@@ -848,10 +848,12 @@
 
     function onControlChange() {
         var prevX = xField;
+        var prevHist = histField;
         xField = document.getElementById("x-axis").value;
         yField = document.getElementById("y-axis").value;
         histField = document.getElementById("hist-var").value;
         if (xField !== prevX && !tableSortKey) tableSortAsc = false;
+        if (histField !== prevHist && !tableSortKey) tableSortAsc = false;
 
         var filters = getFilters();
         var resolvedFilters = filters.map(function (f) {
@@ -887,7 +889,7 @@
         });
 
         computeExtents();
-        if (viewMode === "hist") computeHistBins();
+        if (viewMode === "hist") computeRankData();
         onResize();
         updateStats();
         renderSelectedTable();
@@ -917,38 +919,13 @@
         yMax += yPad;
     }
 
-    function computeHistBins() {
+    function computeRankData() {
         var field = histField;
-        var allVals = allSchools.filter(function (s) { return s[field] != null; })
-            .map(function (s) { return s[field]; });
-        var filtVals = filteredSchools.map(function (s) { return s[field]; });
-
-        if (allVals.length === 0) { histBins = []; return; }
-
-        var lo = Math.min.apply(null, allVals);
-        var hi = Math.max.apply(null, allVals);
-        if (lo === hi) { lo -= 1; hi += 1; }
-
-        var numBins = 40;
-        var binWidth = (hi - lo) / numBins;
-        histBins = [];
-        for (var i = 0; i < numBins; i++) {
-            histBins.push({
-                x0: lo + i * binWidth,
-                x1: lo + (i + 1) * binWidth,
-                allCount: 0,
-                filtCount: 0,
-            });
-        }
-
-        for (var a = 0; a < allVals.length; a++) {
-            var idx = Math.min(Math.floor((allVals[a] - lo) / binWidth), numBins - 1);
-            histBins[idx].allCount++;
-        }
-        for (var f = 0; f < filtVals.length; f++) {
-            var fi = Math.min(Math.floor((filtVals[f] - lo) / binWidth), numBins - 1);
-            histBins[fi].filtCount++;
-        }
+        var filterActive = getFilters().length > 0;
+        var source = filterActive ? filteredSchools : allSchools;
+        rankedSchools = source.filter(function (s) { return s[field] != null; })
+            .slice()
+            .sort(function (a, b) { return a[field] - b[field]; });
     }
 
     // --- Drawing ---
@@ -981,7 +958,7 @@
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
         ctx.clearRect(0, 0, width, height);
         if (viewMode === "hist") {
-            drawHistogram();
+            drawRankPlot();
         } else {
             drawAxes();
             drawMedians();
@@ -1083,55 +1060,62 @@
         ctx.restore();
     }
 
-    function drawHistogram() {
-        var filterActive = getFilters().length > 0;
-
+    function drawRankPlot() {
         // Draw axes
         ctx.strokeStyle = "#ccc";
         ctx.lineWidth = 1;
         ctx.strokeRect(PADDING.left, PADDING.top, plotW, plotH);
 
-        if (histBins.length === 0) return;
+        if (rankedSchools.length === 0) return;
 
-        var maxCount = 0;
-        var countKey = filterActive ? "filtCount" : "allCount";
-        for (var i = 0; i < histBins.length; i++) {
-            if (histBins[i][countKey] > maxCount) maxCount = histBins[i][countKey];
-        }
-        if (maxCount === 0) return;
+        var field = histField;
+        var n = rankedSchools.length;
+        var vMin = rankedSchools[0][field];
+        var vMax = rankedSchools[n - 1][field];
+        var vPad = (vMax - vMin) * 0.02 || 1;
+        vMin -= vPad;
+        vMax += vPad;
 
-        var binX0 = histBins[0].x0;
-        var binX1 = histBins[histBins.length - 1].x1;
-        var xRange = binX1 - binX0;
+        function rankToX(i) {
+            return PADDING.left + (i / (n - 1 || 1)) * plotW;
+        }
+        function valToY(val) {
+            return PADDING.top + plotH - ((val - vMin) / (vMax - vMin)) * plotH;
+        }
 
-        function histToX(val) {
-            return PADDING.left + ((val - binX0) / xRange) * plotW;
-        }
-        function countToY(count) {
-            return PADDING.top + plotH - (count / maxCount) * plotH;
-        }
+        // Store for hover
+        rankToXFn = rankToX;
+        rankValToYFn = valToY;
+        rankVMin = vMin;
+        rankVMax = vMax;
+
+        // X-axis label (rank)
+        ctx.fillStyle = "#333";
+        ctx.font = "12px -apple-system, sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText("Rank", PADDING.left + plotW / 2, height - 5);
 
         // X-axis ticks
         ctx.fillStyle = "#666";
         ctx.font = "11px -apple-system, sans-serif";
-        ctx.textAlign = "center";
-        var xTicks = niceTicksFor(binX0, binX1);
+        var xTicks = niceTicksFor(1, n);
         for (var t = 0; t < xTicks.length; t++) {
-            var tx = histToX(xTicks[t]);
+            var tx = rankToX(xTicks[t] - 1);
             ctx.beginPath();
             ctx.moveTo(tx, PADDING.top);
             ctx.lineTo(tx, PADDING.top + plotH);
             ctx.strokeStyle = "#eee";
             ctx.stroke();
             ctx.fillStyle = "#666";
+            ctx.textAlign = "center";
             ctx.fillText(formatTick(xTicks[t]), tx, height - PADDING.bottom + 18);
         }
 
-        // Y-axis ticks (counts)
+        // Y-axis ticks
         ctx.textAlign = "right";
-        var yTicks = niceTicksFor(0, maxCount);
+        var yTicks = niceTicksFor(vMin, vMax);
         for (var yt = 0; yt < yTicks.length; yt++) {
-            var yy = countToY(yTicks[yt]);
+            var yy = valToY(yTicks[yt]);
             ctx.beginPath();
             ctx.moveTo(PADDING.left, yy);
             ctx.lineTo(PADDING.left + plotW, yy);
@@ -1141,97 +1125,100 @@
             ctx.fillText(formatTick(yTicks[yt]), PADDING.left - 8, yy + 4);
         }
 
-        // Axis labels
+        // Y-axis label
         ctx.fillStyle = "#333";
         ctx.font = "12px -apple-system, sans-serif";
-        ctx.textAlign = "center";
-        ctx.fillText(FIELD_LABELS[histField] || histField, PADDING.left + plotW / 2, height - 5);
-
         ctx.save();
         ctx.translate(14, PADDING.top + plotH / 2);
         ctx.rotate(-Math.PI / 2);
-        ctx.fillText("Number of schools", 0, 0);
+        ctx.textAlign = "center";
+        ctx.fillText(FIELD_LABELS[field] || field, 0, 0);
         ctx.restore();
 
-        // Draw bars
-        for (var b = 0; b < histBins.length; b++) {
-            var bin = histBins[b];
-            var bx = histToX(bin.x0);
-            var bw = histToX(bin.x1) - bx;
-            var count = filterActive ? bin.filtCount : bin.allCount;
-
-            if (count > 0) {
-                var bh = PADDING.top + plotH - countToY(count);
-                ctx.fillStyle = "rgba(51, 119, 204, 0.5)";
-                ctx.fillRect(bx, countToY(count), bw, bh);
-                ctx.strokeStyle = "rgba(51, 119, 204, 0.7)";
-                ctx.lineWidth = 0.5;
-                ctx.strokeRect(bx, countToY(count), bw, bh);
-            }
+        // Draw lines for each school
+        var baseline = PADDING.top + plotH;
+        ctx.strokeStyle = "rgba(51, 119, 204, 0.4)";
+        ctx.lineWidth = Math.max(1, plotW / n);
+        for (var i = 0; i < n; i++) {
+            if (selectedUrns.has(rankedSchools[i].urn)) continue;
+            var x = rankToX(i);
+            var y = valToY(rankedSchools[i][field]);
+            ctx.beginPath();
+            ctx.moveTo(x, baseline);
+            ctx.lineTo(x, y);
+            ctx.stroke();
         }
 
-        // Draw median lines
-        var natMed = computeMedian(allSchools, histField);
+        // Draw median lines (horizontal)
+        var natMed = computeMedian(allSchools, field);
         if (natMed != null) {
             ctx.save();
             ctx.strokeStyle = "#888";
             ctx.lineWidth = 2;
             ctx.beginPath();
-            var mx = histToX(natMed);
-            ctx.moveTo(mx, PADDING.top);
-            ctx.lineTo(mx, PADDING.top + plotH);
+            var my = valToY(natMed);
+            ctx.moveTo(PADDING.left, my);
+            ctx.lineTo(PADDING.left + plotW, my);
             ctx.stroke();
             ctx.restore();
         }
+        var filterActive = getFilters().length > 0;
         if (filterActive) {
-            var filtMed = computeMedian(filteredSchools, histField);
+            var filtMed = computeMedian(filteredSchools, field);
             if (filtMed != null) {
                 ctx.save();
                 ctx.strokeStyle = "#888";
                 ctx.lineWidth = 2;
                 ctx.setLineDash([8, 5]);
                 ctx.beginPath();
-                var fmx = histToX(filtMed);
-                ctx.moveTo(fmx, PADDING.top);
-                ctx.lineTo(fmx, PADDING.top + plotH);
+                var fmy = valToY(filtMed);
+                ctx.moveTo(PADDING.left, fmy);
+                ctx.lineTo(PADDING.left + plotW, fmy);
                 ctx.stroke();
                 ctx.restore();
             }
         }
 
-        // Draw highlighted school markers
-        for (var urn of selectedUrns) {
-            var school = allSchools.find(function (s) { return s.urn === urn; });
-            if (!school || school[histField] == null) continue;
-            var sx = histToX(school[histField]);
-            var color = getSelectedColor(urn);
-            // Draw triangle marker at bottom
-            ctx.fillStyle = color;
-            ctx.beginPath();
-            ctx.moveTo(sx, PADDING.top + plotH + 8);
-            ctx.lineTo(sx - 5, PADDING.top + plotH + 16);
-            ctx.lineTo(sx + 5, PADDING.top + plotH + 16);
-            ctx.closePath();
-            ctx.fill();
-            // Vertical line
-            ctx.save();
+        // Draw selected school lines on top
+        for (var j = 0; j < n; j++) {
+            var s = rankedSchools[j];
+            if (!selectedUrns.has(s.urn)) continue;
+            var sx = rankToX(j);
+            var sy = valToY(s[field]);
+            var color = getSelectedColor(s.urn);
             ctx.strokeStyle = color;
-            ctx.lineWidth = 1.5;
-            ctx.setLineDash([3, 3]);
+            ctx.lineWidth = Math.max(2, plotW / n);
             ctx.beginPath();
-            ctx.moveTo(sx, PADDING.top);
-            ctx.lineTo(sx, PADDING.top + plotH);
+            ctx.moveTo(sx, baseline);
+            ctx.lineTo(sx, sy);
             ctx.stroke();
-            ctx.restore();
+            // Label
+            ctx.fillStyle = isInFilteredSet(s.urn) ? color : "#aaa";
+            ctx.font = "bold 11px -apple-system, sans-serif";
+            ctx.textAlign = "left";
+            ctx.fillText(s.name, sx + 4, sy - 4);
         }
 
-        // Store histogram coordinate functions for hover
-        histToXFn = histToX;
-        histMaxCount = maxCount;
+        // Draw hovered school
+        if (hoveredSchool && !selectedUrns.has(hoveredSchool.urn)) {
+            var hi = rankedSchools.indexOf(hoveredSchool);
+            if (hi >= 0) {
+                var hx = rankToX(hi);
+                var hy = valToY(hoveredSchool[field]);
+                ctx.strokeStyle = "rgba(220, 50, 50, 0.9)";
+                ctx.lineWidth = Math.max(3, plotW / n + 1);
+                ctx.beginPath();
+                ctx.moveTo(hx, baseline);
+                ctx.lineTo(hx, hy);
+                ctx.stroke();
+            }
+        }
     }
 
-    var histToXFn = null;
-    var histMaxCount = 0;
+    var rankToXFn = null;
+    var rankValToYFn = null;
+    var rankVMin = 0;
+    var rankVMax = 100;
 
     function updateLegend() {
         var legend = document.getElementById("chart-legend");
@@ -1294,7 +1281,7 @@
         var my = e.clientY - rect.top;
 
         if (viewMode === "hist") {
-            onHistMouseMove(mx, my);
+            onRankMouseMove(mx, my);
             return;
         }
 
@@ -1338,31 +1325,35 @@
         }
     }
 
-    function onHistMouseMove(mx, my) {
-        if (!histToXFn || histBins.length === 0) return;
-        var filterActive = getFilters().length > 0;
-
-        // Find which bin the mouse is over
-        var found = null;
-        for (var i = 0; i < histBins.length; i++) {
-            var bx0 = histToXFn(histBins[i].x0);
-            var bx1 = histToXFn(histBins[i].x1);
-            if (mx >= bx0 && mx < bx1 && my >= PADDING.top && my <= PADDING.top + plotH) {
-                found = histBins[i];
-                break;
-            }
+    function onRankMouseMove(mx, my) {
+        if (!rankToXFn || rankedSchools.length === 0) return;
+        if (mx < PADDING.left || mx > PADDING.left + plotW || my < PADDING.top || my > PADDING.top + plotH) {
+            if (hoveredSchool) { hoveredSchool = null; draw(); }
+            tooltip.classList.remove("visible");
+            return;
         }
 
-        if (found !== hoveredBin) {
-            hoveredBin = found;
+        // Find nearest school by x position
+        var n = rankedSchools.length;
+        var frac = (mx - PADDING.left) / plotW;
+        var idx = Math.round(frac * (n - 1));
+        idx = Math.max(0, Math.min(n - 1, idx));
+        var best = rankedSchools[idx];
+
+        if (best !== hoveredSchool) {
+            hoveredSchool = best;
+            draw();
         }
 
-        if (found) {
-            var label = FIELD_LABELS[histField] || histField;
-            var html = "<strong>" + formatValue(found.x0) + " \u2013 " + formatValue(found.x1) + "</strong><br>";
-            var count = filterActive ? found.filtCount : found.allCount;
-            html += count + " school" + (count !== 1 ? "s" : "");
-            tooltip.innerHTML = html;
+        if (best) {
+            var field = histField;
+            var label = FIELD_LABELS[field] || field;
+            tooltip.innerHTML =
+                "<strong>" + best.name + "</strong><br>" +
+                best.la_name + " \u00b7 " + (best.town || "") + "<br>" +
+                best.school_type + "<br>" +
+                label + ": " + formatValue(best[field]) + "<br>" +
+                "Rank: " + (idx + 1) + " / " + n;
             tooltip.classList.add("visible");
 
             var tx = mx + 15;
@@ -1371,14 +1362,10 @@
             if (ty < 0) ty = my + 15;
             tooltip.style.left = tx + "px";
             tooltip.style.top = ty + "px";
-        } else {
-            tooltip.classList.remove("visible");
-            hoveredBin = null;
         }
     }
 
     function onCanvasClick() {
-        if (viewMode === "hist") return;
         if (hoveredSchool) {
             toggleSchool(hoveredSchool.urn);
         }
@@ -1386,7 +1373,6 @@
 
     function onMouseLeave() {
         hoveredSchool = null;
-        hoveredBin = null;
         tooltip.classList.remove("visible");
         draw();
     }

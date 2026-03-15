@@ -347,7 +347,7 @@ def build_html(filter_options):
         <div class="sidebar">
             <div class="controls">
                 <div class="view-toggle">
-                    <button type="button" id="view-hist" class="view-btn active">Histogram</button>
+                    <button type="button" id="view-hist" class="view-btn active">Rank</button>
                     <button type="button" id="view-scatter" class="view-btn">Scatter</button>
                 </div>
                 <div id="scatter-controls" class="axis-controls" style="display:none">
