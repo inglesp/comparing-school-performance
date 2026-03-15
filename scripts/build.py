@@ -169,6 +169,19 @@ def parse_ofsted_grade(val):
         return None
 
 
+NEW_FRAMEWORK_VALID = {
+    "Exceptional", "Strong standard", "Expected standard",
+    "Needs attention", "Urgent improvement",
+}
+
+
+def parse_new_framework(val):
+    """Parse a new framework judgement text value."""
+    if not val or val == "NULL" or val == "Not applicable":
+        return None
+    return val if val in NEW_FRAMEWORK_VALID else None
+
+
 def load_ofsted():
     """Load IDACI quintile and Ofsted judgements from management information."""
     ofsted = {}
@@ -183,6 +196,7 @@ def load_ofsted():
             idaci = parse_int(row.get("The income deprivation affecting children index (IDACI) quintile", ""))
             if idaci is not None:
                 data["idaci_quintile"] = idaci
+            # OEIF graded inspection
             data["ofsted_overall"] = parse_ofsted_grade(row.get("Latest OEIF overall effectiveness", ""))
             data["ofsted_quality"] = parse_ofsted_grade(row.get("Latest OEIF quality of education", ""))
             data["ofsted_behaviour"] = parse_ofsted_grade(row.get("Latest OEIF behaviour and attitudes", ""))
@@ -190,6 +204,15 @@ def load_ofsted():
             data["ofsted_leadership"] = parse_ofsted_grade(row.get("Latest OEIF effectiveness of leadership and management", ""))
             data["ofsted_early_years"] = parse_ofsted_grade(row.get("Latest OEIF early years provision (where applicable)", ""))
             data["ofsted_sixth_form"] = parse_ofsted_grade(row.get("Latest OEIF sixth form provision (where applicable)", ""))
+            # New framework
+            data["nf_safeguarding"] = parse_new_framework(row.get("Safeguarding standards", ""))
+            data["nf_inclusion"] = parse_new_framework(row.get("Inclusion", ""))
+            data["nf_curriculum"] = parse_new_framework(row.get("Curriculum and teaching", ""))
+            data["nf_achievement"] = parse_new_framework(row.get("Achievement", ""))
+            data["nf_attendance"] = parse_new_framework(row.get("Attendance and behaviour", ""))
+            data["nf_personal"] = parse_new_framework(row.get("Personal development and wellbeing", ""))
+            data["nf_early_years"] = parse_new_framework(row.get("Early years (where applicable)", ""))
+            data["nf_leadership"] = parse_new_framework(row.get("Leadership and governance", ""))
             if data:
                 ofsted[urn] = data
     return ofsted
@@ -237,12 +260,17 @@ def build_filter_options(schools):
         s["trust_name"] for s in schools if s["trust_name"]
     ))
     ofsted_grades = ["1", "2", "3", "4"]
+    nf_judgements = [
+        "Exceptional", "Strong standard", "Expected standard",
+        "Needs attention", "Urgent improvement",
+    ]
     return {
         "la_names": la_names,
         "school_types": school_types,
         "religious_characters": religious_characters,
         "trust_names": trust_names,
         "ofsted_grades": ofsted_grades,
+        "nf_judgements": nf_judgements,
     }
 
 
@@ -263,6 +291,13 @@ KS2_FIELD_LABELS = {
     "ofsted_personal": "Ofsted personal development",
     "ofsted_leadership": "Ofsted leadership & management",
     "ofsted_early_years": "Ofsted early years",
+    "nf_inclusion": "New Ofsted: inclusion",
+    "nf_curriculum": "New Ofsted: curriculum & teaching",
+    "nf_achievement": "New Ofsted: achievement",
+    "nf_attendance": "New Ofsted: attendance & behaviour",
+    "nf_personal": "New Ofsted: personal development",
+    "nf_early_years": "New Ofsted: early years",
+    "nf_leadership": "New Ofsted: leadership & governance",
     "number_on_roll": "Number on roll",
     "eligible_pupils": "Eligible pupils (KS2)",
     "pct_rwm_expected": "% RWM expected",
@@ -298,6 +333,10 @@ KS2_FIELD_GROUPS = [
         "ofsted_overall", "ofsted_quality", "ofsted_behaviour",
         "ofsted_personal", "ofsted_leadership", "ofsted_early_years",
     ]),
+    ("Ofsted (new framework)", [
+        "nf_inclusion", "nf_curriculum", "nf_achievement",
+        "nf_attendance", "nf_personal", "nf_early_years", "nf_leadership",
+    ]),
     ("Attainment (expected)", [
         "pct_rwm_expected", "pct_reading_expected", "pct_writing_expected",
         "pct_maths_expected", "pct_gps_expected",
@@ -331,6 +370,13 @@ KS2_TABLE_COLUMNS = [
     {"group": "Ofsted", "key": "ofsted_personal", "label": "Personal", "rank": True},
     {"group": "Ofsted", "key": "ofsted_leadership", "label": "Leadership", "rank": True},
     {"group": "Ofsted", "key": "ofsted_early_years", "label": "Early yrs", "rank": True},
+    {"group": "Ofsted (new)", "key": "nf_inclusion", "label": "Inclusion"},
+    {"group": "Ofsted (new)", "key": "nf_curriculum", "label": "Curriculum"},
+    {"group": "Ofsted (new)", "key": "nf_achievement", "label": "Achievement"},
+    {"group": "Ofsted (new)", "key": "nf_attendance", "label": "Attendance"},
+    {"group": "Ofsted (new)", "key": "nf_personal", "label": "Personal"},
+    {"group": "Ofsted (new)", "key": "nf_early_years", "label": "Early yrs"},
+    {"group": "Ofsted (new)", "key": "nf_leadership", "label": "Leadership"},
     {"group": "Attainment (expected)", "key": "pct_rwm_expected", "label": "% RWM exp", "fmt": "pct", "rank": True, "defaultOn": True},
     {"group": "Attainment (expected)", "key": "pct_reading_expected", "label": "% read exp", "fmt": "pct", "rank": True, "defaultOn": True},
     {"group": "Attainment (expected)", "key": "pct_writing_expected", "label": "% write exp", "fmt": "pct", "rank": True, "defaultOn": True},
@@ -373,6 +419,12 @@ KS4_FIELD_LABELS = {
     "ofsted_personal": "Ofsted personal development",
     "ofsted_leadership": "Ofsted leadership & management",
     "ofsted_sixth_form": "Ofsted sixth form",
+    "nf_inclusion": "New Ofsted: inclusion",
+    "nf_curriculum": "New Ofsted: curriculum & teaching",
+    "nf_achievement": "New Ofsted: achievement",
+    "nf_attendance": "New Ofsted: attendance & behaviour",
+    "nf_personal": "New Ofsted: personal development",
+    "nf_leadership": "New Ofsted: leadership & governance",
     "number_on_roll": "Number on roll",
     "ks4_pupils": "KS4 pupils",
     "att8": "Attainment 8",
@@ -405,6 +457,10 @@ KS4_FIELD_GROUPS = [
         "ofsted_overall", "ofsted_quality", "ofsted_behaviour",
         "ofsted_personal", "ofsted_leadership", "ofsted_sixth_form",
     ]),
+    ("Ofsted (new framework)", [
+        "nf_inclusion", "nf_curriculum", "nf_achievement",
+        "nf_attendance", "nf_personal", "nf_leadership",
+    ]),
     ("Attainment 8", [
         "att8", "att8_english", "att8_maths", "att8_ebacc", "att8_open",
     ]),
@@ -434,6 +490,12 @@ KS4_TABLE_COLUMNS = [
     {"group": "Ofsted", "key": "ofsted_personal", "label": "Personal", "rank": True},
     {"group": "Ofsted", "key": "ofsted_leadership", "label": "Leadership", "rank": True},
     {"group": "Ofsted", "key": "ofsted_sixth_form", "label": "Sixth form", "rank": True},
+    {"group": "Ofsted (new)", "key": "nf_inclusion", "label": "Inclusion"},
+    {"group": "Ofsted (new)", "key": "nf_curriculum", "label": "Curriculum"},
+    {"group": "Ofsted (new)", "key": "nf_achievement", "label": "Achievement"},
+    {"group": "Ofsted (new)", "key": "nf_attendance", "label": "Attendance"},
+    {"group": "Ofsted (new)", "key": "nf_personal", "label": "Personal"},
+    {"group": "Ofsted (new)", "key": "nf_leadership", "label": "Leadership"},
     {"group": "Attainment 8", "key": "att8", "label": "Att 8", "rank": True, "defaultOn": True},
     {"group": "Attainment 8", "key": "att8_english", "label": "Att 8 Eng", "rank": True, "defaultOn": True},
     {"group": "Attainment 8", "key": "att8_maths", "label": "Att 8 Mat", "rank": True, "defaultOn": True},

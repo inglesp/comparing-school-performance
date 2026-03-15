@@ -204,38 +204,58 @@
     var OFSTED_GRADE_LABELS = { "1": "1 – Outstanding", "2": "2 – Good", "3": "3 – Requires improvement", "4": "4 – Inadequate" };
 
     var FILTER_CATEGORIES = [
-        { key: "la", label: "Local authority", type: "select", options: FILTER_OPTIONS.la_names, schoolKey: "la_name" },
-        { key: "type", label: "School type", type: "select", options: FILTER_OPTIONS.school_types, schoolKey: "school_type" },
-        { key: "religion", label: "Religious character", type: "select", options: FILTER_OPTIONS.religious_characters, schoolKey: "religious_character" },
-        { key: "trust", label: "Academy trust", type: "select", options: FILTER_OPTIONS.trust_names, schoolKey: "trust_name" },
+        { key: "la", label: "Local authority", group: "School info", type: "select", options: FILTER_OPTIONS.la_names, schoolKey: "la_name" },
+        { key: "type", label: "School type", group: "School info", type: "select", options: FILTER_OPTIONS.school_types, schoolKey: "school_type" },
+        { key: "religion", label: "Religious character", group: "School info", type: "select", options: FILTER_OPTIONS.religious_characters, schoolKey: "religious_character" },
+        { key: "trust", label: "Academy trust", group: "School info", type: "select", options: FILTER_OPTIONS.trust_names, schoolKey: "trust_name" },
     ];
 
     var OFSTED_FILTER_FIELDS = [
-        { key: "ofsted", label: "Ofsted overall", schoolKey: "ofsted_overall" },
-        { key: "ofsted_quality", label: "Ofsted quality of education", schoolKey: "ofsted_quality" },
-        { key: "ofsted_behaviour", label: "Ofsted behaviour & attitudes", schoolKey: "ofsted_behaviour" },
-        { key: "ofsted_personal", label: "Ofsted personal development", schoolKey: "ofsted_personal" },
-        { key: "ofsted_leadership", label: "Ofsted leadership & management", schoolKey: "ofsted_leadership" },
-        { key: "ofsted_early_years", label: "Ofsted early years", schoolKey: "ofsted_early_years" },
-        { key: "ofsted_sixth_form", label: "Ofsted sixth form", schoolKey: "ofsted_sixth_form" },
+        { key: "ofsted", label: "Overall", schoolKey: "ofsted_overall" },
+        { key: "ofsted_quality", label: "Quality of education", schoolKey: "ofsted_quality" },
+        { key: "ofsted_behaviour", label: "Behaviour & attitudes", schoolKey: "ofsted_behaviour" },
+        { key: "ofsted_personal", label: "Personal development", schoolKey: "ofsted_personal" },
+        { key: "ofsted_leadership", label: "Leadership & management", schoolKey: "ofsted_leadership" },
+        { key: "ofsted_early_years", label: "Early years", schoolKey: "ofsted_early_years" },
+        { key: "ofsted_sixth_form", label: "Sixth form", schoolKey: "ofsted_sixth_form" },
     ];
     for (var oi = 0; oi < OFSTED_FILTER_FIELDS.length; oi++) {
         var of_ = OFSTED_FILTER_FIELDS[oi];
         if (FIELD_LABELS[of_.schoolKey]) {
             FILTER_CATEGORIES.push({
-                key: of_.key, label: of_.label, type: "select",
+                key: of_.key, label: of_.label, group: "Ofsted", type: "select",
                 options: FILTER_OPTIONS.ofsted_grades, schoolKey: of_.schoolKey,
                 optionLabels: OFSTED_GRADE_LABELS, numeric: true
             });
         }
     }
 
-    // Add a "min ..." entry for each demographic field
+    var NF_FILTER_FIELDS = [
+        { key: "nf_inclusion", label: "Inclusion", schoolKey: "nf_inclusion" },
+        { key: "nf_curriculum", label: "Curriculum & teaching", schoolKey: "nf_curriculum" },
+        { key: "nf_achievement", label: "Achievement", schoolKey: "nf_achievement" },
+        { key: "nf_attendance", label: "Attendance & behaviour", schoolKey: "nf_attendance" },
+        { key: "nf_personal", label: "Personal development", schoolKey: "nf_personal" },
+        { key: "nf_early_years", label: "Early years", schoolKey: "nf_early_years" },
+        { key: "nf_leadership", label: "Leadership & governance", schoolKey: "nf_leadership" },
+    ];
+    for (var ni = 0; ni < NF_FILTER_FIELDS.length; ni++) {
+        var nf = NF_FILTER_FIELDS[ni];
+        if (FIELD_LABELS[nf.schoolKey]) {
+            FILTER_CATEGORIES.push({
+                key: nf.key, label: nf.label, group: "Ofsted (new framework)", type: "select",
+                options: FILTER_OPTIONS.nf_judgements, schoolKey: nf.schoolKey
+            });
+        }
+    }
+
+    // Add a percentile entry for each demographic field
     for (var di = 0; di < DEMOGRAPHIC_FIELDS.length; di++) {
         var df = DEMOGRAPHIC_FIELDS[di];
         FILTER_CATEGORIES.push({
             key: df,
             label: FIELD_LABELS[df],
+            group: "Demographics",
             type: "percentile",
             schoolKey: df,
         });
@@ -246,17 +266,25 @@
         var row = document.createElement("div");
         row.className = "filter-row";
 
-        // Category select
+        // Category select with optgroups
         var catSelect = document.createElement("select");
         catSelect.className = "filter-cat-select";
         catSelect.innerHTML = '<option value="">Choose...</option>';
+        var currentGroup = null;
+        var currentOptgroup = null;
         for (var i = 0; i < FILTER_CATEGORIES.length; i++) {
             var cat = FILTER_CATEGORIES[i];
+            if (cat.group !== currentGroup) {
+                currentGroup = cat.group;
+                currentOptgroup = document.createElement("optgroup");
+                currentOptgroup.label = currentGroup;
+                catSelect.appendChild(currentOptgroup);
+            }
             var opt = document.createElement("option");
             opt.value = cat.key;
             opt.textContent = cat.label;
             if (cat.key === categoryKey) opt.selected = true;
-            catSelect.appendChild(opt);
+            currentOptgroup.appendChild(opt);
         }
 
         var valueContainer = document.createElement("span");
