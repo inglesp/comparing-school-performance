@@ -14,6 +14,7 @@ from pathlib import Path
 
 DATA_DIR = Path("data/csp/2024-2025")
 GIAS_DIR = Path("data/gias/20260312")
+OFSTED_CSV = Path("data/ofsted/20260228.csv")
 SITE_DIR = Path("_site")
 STATIC_DIR = Path("static")
 
@@ -157,6 +158,22 @@ def load_ks4():
     return ks4
 
 
+def load_ofsted():
+    """Load IDACI quintile from Ofsted management information."""
+    ofsted = {}
+    with open(OFSTED_CSV, encoding="cp1252") as f:
+        next(f)  # skip title row
+        next(f)  # skip filter instruction row
+        for row in csv.DictReader(f):
+            urn = row.get("URN", "").strip()
+            if not urn:
+                continue
+            idaci = parse_int(row.get("The income deprivation affecting children index (IDACI) quintile", ""))
+            if idaci is not None:
+                ofsted[urn] = {"idaci_quintile": idaci}
+    return ofsted
+
+
 def load_gias_trusts():
     filepath = GIAS_DIR / "edubasealldata20260312.csv"
     trusts = {}
@@ -172,7 +189,7 @@ def load_gias_trusts():
 # Merging
 # ---------------------------------------------------------------------------
 
-def build_data(school_info, census, results, gias_trusts):
+def build_data(school_info, census, results, gias_trusts, ofsted):
     schools = []
     for urn, info in school_info.items():
         if urn not in results:
@@ -182,6 +199,7 @@ def build_data(school_info, census, results, gias_trusts):
         school.update(census.get(urn, {}))
         school.update(results[urn])
         school["trust_name"] = gias_trusts.get(urn, "")
+        school.update(ofsted.get(urn, {}))
         schools.append(school)
     trust_count = sum(1 for s in schools if s["trust_name"])
     print(f"  Merged: {len(schools)} ({trust_count} with trust)")
@@ -215,6 +233,7 @@ KS2_FIELD_LABELS = {
     "pct_sen": "% SEN (total)",
     "pct_sen_support": "% SEN support",
     "pct_sen_ehcp": "% SEN EHCP",
+    "idaci_quintile": "IDACI quintile",
     "number_on_roll": "Number on roll",
     "eligible_pupils": "Eligible pupils (KS2)",
     "pct_rwm_expected": "% RWM expected",
@@ -237,13 +256,14 @@ KS2_FIELD_LABELS = {
 
 KS2_DEMOGRAPHIC_FIELDS = [
     "pct_fsm_ever", "pct_eal", "pct_sen", "pct_sen_support", "pct_sen_ehcp",
-    "number_on_roll", "eligible_pupils",
+    "idaci_quintile", "number_on_roll", "eligible_pupils",
 ]
 
 KS2_FIELD_GROUPS = [
     ("School info", ["number_on_roll", "eligible_pupils"]),
     ("Demographics", [
         "pct_fsm_ever", "pct_eal", "pct_sen", "pct_sen_support", "pct_sen_ehcp",
+        "idaci_quintile",
     ]),
     ("Attainment (expected)", [
         "pct_rwm_expected", "pct_reading_expected", "pct_writing_expected",
@@ -271,6 +291,7 @@ KS2_TABLE_COLUMNS = [
     {"group": "Demographics", "key": "pct_sen", "label": "% SEN", "fmt": "pct", "rank": True, "defaultOn": True},
     {"group": "Demographics", "key": "pct_sen_support", "label": "% SEN sup", "fmt": "pct", "rank": True, "defaultOn": True},
     {"group": "Demographics", "key": "pct_sen_ehcp", "label": "% EHCP", "fmt": "pct", "rank": True, "defaultOn": True},
+    {"group": "Demographics", "key": "idaci_quintile", "label": "IDACI", "rank": True, "defaultOn": True},
     {"group": "Attainment (expected)", "key": "pct_rwm_expected", "label": "% RWM exp", "fmt": "pct", "rank": True, "defaultOn": True},
     {"group": "Attainment (expected)", "key": "pct_reading_expected", "label": "% read exp", "fmt": "pct", "rank": True, "defaultOn": True},
     {"group": "Attainment (expected)", "key": "pct_writing_expected", "label": "% write exp", "fmt": "pct", "rank": True, "defaultOn": True},
@@ -306,6 +327,7 @@ KS4_FIELD_LABELS = {
     "pct_sen": "% SEN (total)",
     "pct_sen_support": "% SEN support",
     "pct_sen_ehcp": "% SEN EHCP",
+    "idaci_quintile": "IDACI quintile",
     "number_on_roll": "Number on roll",
     "ks4_pupils": "KS4 pupils",
     "att8": "Attainment 8",
@@ -325,13 +347,14 @@ KS4_FIELD_LABELS = {
 
 KS4_DEMOGRAPHIC_FIELDS = [
     "pct_fsm_ever", "pct_eal", "pct_sen", "pct_sen_support", "pct_sen_ehcp",
-    "number_on_roll", "ks4_pupils",
+    "idaci_quintile", "number_on_roll", "ks4_pupils",
 ]
 
 KS4_FIELD_GROUPS = [
     ("School info", ["number_on_roll", "ks4_pupils"]),
     ("Demographics", [
         "pct_fsm_ever", "pct_eal", "pct_sen", "pct_sen_support", "pct_sen_ehcp",
+        "idaci_quintile",
     ]),
     ("Attainment 8", [
         "att8", "att8_english", "att8_maths", "att8_ebacc", "att8_open",
@@ -355,6 +378,7 @@ KS4_TABLE_COLUMNS = [
     {"group": "Demographics", "key": "pct_sen", "label": "% SEN", "fmt": "pct", "rank": True, "defaultOn": True},
     {"group": "Demographics", "key": "pct_sen_support", "label": "% SEN sup", "fmt": "pct", "rank": True, "defaultOn": True},
     {"group": "Demographics", "key": "pct_sen_ehcp", "label": "% EHCP", "fmt": "pct", "rank": True, "defaultOn": True},
+    {"group": "Demographics", "key": "idaci_quintile", "label": "IDACI", "rank": True, "defaultOn": True},
     {"group": "Attainment 8", "key": "att8", "label": "Att 8", "rank": True, "defaultOn": True},
     {"group": "Attainment 8", "key": "att8_english", "label": "Att 8 Eng", "rank": True, "defaultOn": True},
     {"group": "Attainment 8", "key": "att8_maths", "label": "Att 8 Mat", "rank": True, "defaultOn": True},
@@ -648,6 +672,7 @@ def main():
 
     print("Loading CSVs...")
     gias_trusts = load_gias_trusts()
+    ofsted = load_ofsted()
 
     # --- KS2 ---
     print("\n--- KS2 (Primary) ---")
@@ -658,7 +683,7 @@ def main():
     print(f"  Census: {len(ks2_census)}")
     print(f"  KS2: {len(ks2)}")
     print(f"  GIAS trusts: {len(gias_trusts)}")
-    ks2_schools = build_data(ks2_school_info, ks2_census, ks2, gias_trusts)
+    ks2_schools = build_data(ks2_school_info, ks2_census, ks2, gias_trusts, ofsted)
 
     nav_html = '<strong>KS2</strong> · <a href="../ks4/">KS4</a>'
     build_page(
@@ -683,7 +708,7 @@ def main():
     print(f"  School info: {len(ks4_school_info)}")
     print(f"  Census: {len(ks4_census)}")
     print(f"  KS4: {len(ks4)}")
-    ks4_schools = build_data(ks4_school_info, ks4_census, ks4, gias_trusts)
+    ks4_schools = build_data(ks4_school_info, ks4_census, ks4, gias_trusts, ofsted)
 
     nav_html = '<a href="../ks2/">KS2</a> · <strong>KS4</strong>'
     build_page(
