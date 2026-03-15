@@ -32,7 +32,7 @@
     let searchInput, searchResults, selectedContainer;
     let width, height, plotW, plotH;
     let viewMode = "scatter";  // "scatter" or "hist"
-    let histField = "pct_fsm_ever";
+    let histField = DEFAULTS.hist;
     let xField, yField;
     let xMin, xMax, yMin, yMax;
     let rankedSchools = [];  // sorted schools for rank plot
@@ -168,9 +168,9 @@
         var filters = getFilters();
 
         if (viewMode === "hist") params.set("view", "rank");
-        if (x !== "pct_fsm_ever") params.set("x", x);
-        if (y !== "pct_rwm_expected") params.set("y", y);
-        if (hv !== "pct_fsm_ever") params.set("var", hv);
+        if (x !== DEFAULTS.x) params.set("x", x);
+        if (y !== DEFAULTS.y) params.set("y", y);
+        if (hv !== DEFAULTS.hist) params.set("var", hv);
 
         if (filters.length > 0) {
             params.set("f", filters.map(function (f) {

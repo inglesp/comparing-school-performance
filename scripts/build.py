@@ -494,6 +494,7 @@ def build_html(*, title, subtitle, help_html, field_labels, demographic_fields,
         var DEMOGRAPHIC_FIELDS = {json.dumps(demographic_fields)};
         var FILTER_OPTIONS = {json.dumps(filter_options)};
         var TABLE_COLUMNS = {json.dumps(table_columns)};
+        var DEFAULTS = {json.dumps(defaults)};
         var DATA_URL = "{data_url}";
     </script>
     <script src="../dashboard.js"></script>
