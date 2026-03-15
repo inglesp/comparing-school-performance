@@ -1,8 +1,8 @@
 """Build static site from CSV data.
 
 Reads the DfE CSV files, merges them, and writes:
-  - _site/data.json  (school data)
-  - _site/index.html
+  - _site/index.html + data.json  (KS2 primary schools)
+  - _site/ks4/index.html + data.json  (KS4 secondary schools)
   - _site/dashboard.js
   - _site/style.css
 """
@@ -53,14 +53,19 @@ def add_nullable(a, b):
     return None
 
 
-def load_school_info():
+# ---------------------------------------------------------------------------
+# Data loading
+# ---------------------------------------------------------------------------
+
+def load_school_info(*, phase_key, minor_groups):
+    """Load school info, filtering by phase and minor group."""
     filepath = DATA_DIR / "england_school_information.csv"
     schools = {}
     with open(filepath, encoding="utf-8-sig") as f:
         for row in csv.DictReader(f):
-            if row["ISPRIMARY"] != "1":
+            if row[phase_key] != "1":
                 continue
-            if row["MINORGROUP"] not in ("Maintained school", "Academy"):
+            if row["MINORGROUP"] not in minor_groups:
                 continue
             if row["SCHSTATUS"] != "Open":
                 continue
@@ -76,12 +81,13 @@ def load_school_info():
     return schools
 
 
-def load_census():
+def load_census(*, school_type_prefix):
+    """Load census data, filtering by school type prefix."""
     filepath = DATA_DIR / "england_census.csv"
     census = {}
     with open(filepath, encoding="utf-8-sig") as f:
         for row in csv.DictReader(f):
-            if row["SCHOOLTYPE"] != "State-funded primary":
+            if not row["SCHOOLTYPE"].startswith(school_type_prefix):
                 continue
             support = parse_pct(row["PSENELK"])
             ehcp = parse_pct(row["PSENELSE"])
@@ -125,6 +131,32 @@ def load_ks2():
     return ks2
 
 
+def load_ks4():
+    filepath = DATA_DIR / "england_ks4revised.csv"
+    ks4 = {}
+    with open(filepath, encoding="utf-8-sig") as f:
+        for row in csv.DictReader(f):
+            if row["RECTYPE"] != "1":
+                continue
+            ks4[row["URN"]] = {
+                "ks4_pupils": parse_int(row["TPUP"]),
+                "att8": parse_float(row["ATT8SCR"]),
+                "att8_english": parse_float(row["ATT8SCRENG"]),
+                "att8_maths": parse_float(row["ATT8SCRMAT"]),
+                "att8_ebacc": parse_float(row["ATT8SCREBAC"]),
+                "att8_open": parse_float(row["ATT8SCROPEN"]),
+                "pct_basics_94": parse_pct(row["PTL2BASICS_94"]),
+                "pct_basics_95": parse_pct(row["PTL2BASICS_95"]),
+                "pct_ebacc_entry": parse_pct(row["PTEBACC_E_PTQ_EE"]),
+                "pct_ebacc_94": parse_pct(row["PTEBACC_94"]),
+                "pct_ebacc_95": parse_pct(row["PTEBACC_95"]),
+                "pct_fsm6cla1a": parse_pct(row["PTFSM6CLA1A"]),
+                "att8_fsm": parse_float(row.get("ATT8SCR_FSM6CLA1A")),
+                "att8_not_fsm": parse_float(row.get("ATT8SCR_NFSM6CLA1A")),
+            }
+    return ks4
+
+
 def load_gias_trusts():
     filepath = GIAS_DIR / "edubasealldata20260312.csv"
     trusts = {}
@@ -136,29 +168,21 @@ def load_gias_trusts():
     return trusts
 
 
-def build_data():
-    print("Loading CSVs...")
-    school_info = load_school_info()
-    census = load_census()
-    ks2 = load_ks2()
-    gias_trusts = load_gias_trusts()
+# ---------------------------------------------------------------------------
+# Merging
+# ---------------------------------------------------------------------------
 
-    print(f"  School info: {len(school_info)}")
-    print(f"  Census: {len(census)}")
-    print(f"  KS2: {len(ks2)}")
-    print(f"  GIAS trusts: {len(gias_trusts)}")
-
+def build_data(school_info, census, results, gias_trusts):
     schools = []
     for urn, info in school_info.items():
-        if urn not in ks2:
+        if urn not in results:
             continue
         school = {"urn": int(urn)}
         school.update(info)
         school.update(census.get(urn, {}))
-        school.update(ks2[urn])
+        school.update(results[urn])
         school["trust_name"] = gias_trusts.get(urn, "")
         schools.append(school)
-
     trust_count = sum(1 for s in schools if s["trust_name"])
     print(f"  Merged: {len(schools)} ({trust_count} with trust)")
     return schools
@@ -181,7 +205,11 @@ def build_filter_options(schools):
     }
 
 
-FIELD_LABELS = {
+# ---------------------------------------------------------------------------
+# KS2 configuration
+# ---------------------------------------------------------------------------
+
+KS2_FIELD_LABELS = {
     "pct_fsm_ever": "% FSM ever",
     "pct_eal": "% EAL",
     "pct_sen": "% SEN (total)",
@@ -207,34 +235,12 @@ FIELD_LABELS = {
     "pct_rwm_exp_not_fsm": "% RWM expected (non-FSM)",
 }
 
-DEMOGRAPHIC_FIELDS = [
-    "pct_fsm_ever",
-    "pct_eal",
-    "pct_sen",
-    "pct_sen_support",
-    "pct_sen_ehcp",
-    "number_on_roll",
-    "eligible_pupils",
+KS2_DEMOGRAPHIC_FIELDS = [
+    "pct_fsm_ever", "pct_eal", "pct_sen", "pct_sen_support", "pct_sen_ehcp",
+    "number_on_roll", "eligible_pupils",
 ]
 
-ATTAINMENT_FIELDS = [
-    "pct_rwm_expected",
-    "pct_rwm_higher",
-    "pct_reading_expected",
-    "pct_reading_higher",
-    "pct_writing_expected",
-    "pct_writing_higher",
-    "pct_maths_expected",
-    "pct_maths_higher",
-    "pct_gps_expected",
-    "pct_gps_higher",
-    "reading_average",
-    "maths_average",
-    "gps_average",
-]
-
-
-FIELD_GROUPS = [
+KS2_FIELD_GROUPS = [
     ("School info", ["number_on_roll", "eligible_pupils"]),
     ("Demographics", [
         "pct_fsm_ever", "pct_eal", "pct_sen", "pct_sen_support", "pct_sen_ehcp",
@@ -253,36 +259,160 @@ FIELD_GROUPS = [
     ]),
 ]
 
+KS2_TABLE_COLUMNS = [
+    {"group": "School info", "key": "la_name", "label": "LA"},
+    {"group": "School info", "key": "school_type", "label": "Type"},
+    {"group": "School info", "key": "religious_character", "label": "Religion"},
+    {"group": "School info", "key": "trust_name", "label": "Trust"},
+    {"group": "School info", "key": "number_on_roll", "label": "NOR", "rank": True},
+    {"group": "School info", "key": "eligible_pupils", "label": "KS2 pupils", "rank": True, "defaultOn": True},
+    {"group": "Demographics", "key": "pct_fsm_ever", "label": "% FSM", "fmt": "pct", "rank": True, "defaultOn": True},
+    {"group": "Demographics", "key": "pct_eal", "label": "% EAL", "fmt": "pct", "rank": True, "defaultOn": True},
+    {"group": "Demographics", "key": "pct_sen", "label": "% SEN", "fmt": "pct", "rank": True, "defaultOn": True},
+    {"group": "Demographics", "key": "pct_sen_support", "label": "% SEN sup", "fmt": "pct", "rank": True, "defaultOn": True},
+    {"group": "Demographics", "key": "pct_sen_ehcp", "label": "% EHCP", "fmt": "pct", "rank": True, "defaultOn": True},
+    {"group": "Attainment (expected)", "key": "pct_rwm_expected", "label": "% RWM exp", "fmt": "pct", "rank": True, "defaultOn": True},
+    {"group": "Attainment (expected)", "key": "pct_reading_expected", "label": "% read exp", "fmt": "pct", "rank": True, "defaultOn": True},
+    {"group": "Attainment (expected)", "key": "pct_writing_expected", "label": "% write exp", "fmt": "pct", "rank": True, "defaultOn": True},
+    {"group": "Attainment (expected)", "key": "pct_maths_expected", "label": "% maths exp", "fmt": "pct", "rank": True, "defaultOn": True},
+    {"group": "Attainment (expected)", "key": "pct_gps_expected", "label": "% GPS exp", "fmt": "pct", "rank": True, "defaultOn": True},
+    {"group": "Attainment (higher)", "key": "pct_rwm_higher", "label": "% RWM high", "fmt": "pct", "rank": True},
+    {"group": "Attainment (higher)", "key": "pct_reading_higher", "label": "% read high", "fmt": "pct", "rank": True},
+    {"group": "Attainment (higher)", "key": "pct_writing_higher", "label": "% write high", "fmt": "pct", "rank": True},
+    {"group": "Attainment (higher)", "key": "pct_maths_higher", "label": "% maths high", "fmt": "pct", "rank": True},
+    {"group": "Attainment (higher)", "key": "pct_gps_higher", "label": "% GPS high", "fmt": "pct", "rank": True},
+    {"group": "Scaled scores", "key": "reading_average", "label": "Read avg", "rank": True},
+    {"group": "Scaled scores", "key": "maths_average", "label": "Maths avg", "rank": True},
+    {"group": "Scaled scores", "key": "gps_average", "label": "GPS avg", "rank": True},
+    {"group": "Disadvantage", "key": "pct_fsm6cla1a", "label": "% disadv", "fmt": "pct", "rank": True},
+    {"group": "Disadvantage", "key": "pct_rwm_exp_fsm", "label": "% RWM (FSM)", "fmt": "pct", "rank": True},
+    {"group": "Disadvantage", "key": "pct_rwm_exp_not_fsm", "label": "% RWM (non)", "fmt": "pct", "rank": True},
+]
 
-def build_grouped_options(default):
+KS2_DEFAULTS = {
+    "x": "pct_fsm_ever",
+    "y": "pct_rwm_expected",
+    "hist": "pct_fsm_ever",
+}
+
+
+# ---------------------------------------------------------------------------
+# KS4 configuration
+# ---------------------------------------------------------------------------
+
+KS4_FIELD_LABELS = {
+    "pct_fsm_ever": "% FSM ever",
+    "pct_eal": "% EAL",
+    "pct_sen": "% SEN (total)",
+    "pct_sen_support": "% SEN support",
+    "pct_sen_ehcp": "% SEN EHCP",
+    "number_on_roll": "Number on roll",
+    "ks4_pupils": "KS4 pupils",
+    "att8": "Attainment 8",
+    "att8_english": "Attainment 8 English",
+    "att8_maths": "Attainment 8 Maths",
+    "att8_ebacc": "Attainment 8 EBacc",
+    "att8_open": "Attainment 8 Open",
+    "pct_basics_94": "% Basics 9-4 (std pass)",
+    "pct_basics_95": "% Basics 9-5 (strong pass)",
+    "pct_ebacc_entry": "% entering EBacc",
+    "pct_ebacc_94": "% EBacc 9-4",
+    "pct_ebacc_95": "% EBacc 9-5",
+    "pct_fsm6cla1a": "% disadvantaged (KS4)",
+    "att8_fsm": "Attainment 8 (FSM)",
+    "att8_not_fsm": "Attainment 8 (non-FSM)",
+}
+
+KS4_DEMOGRAPHIC_FIELDS = [
+    "pct_fsm_ever", "pct_eal", "pct_sen", "pct_sen_support", "pct_sen_ehcp",
+    "number_on_roll", "ks4_pupils",
+]
+
+KS4_FIELD_GROUPS = [
+    ("School info", ["number_on_roll", "ks4_pupils"]),
+    ("Demographics", [
+        "pct_fsm_ever", "pct_eal", "pct_sen", "pct_sen_support", "pct_sen_ehcp",
+    ]),
+    ("Attainment 8", [
+        "att8", "att8_english", "att8_maths", "att8_ebacc", "att8_open",
+    ]),
+    ("Basics", ["pct_basics_94", "pct_basics_95"]),
+    ("EBacc", ["pct_ebacc_entry", "pct_ebacc_94", "pct_ebacc_95"]),
+    ("Disadvantage", [
+        "pct_fsm6cla1a", "att8_fsm", "att8_not_fsm",
+    ]),
+]
+
+KS4_TABLE_COLUMNS = [
+    {"group": "School info", "key": "la_name", "label": "LA"},
+    {"group": "School info", "key": "school_type", "label": "Type"},
+    {"group": "School info", "key": "religious_character", "label": "Religion"},
+    {"group": "School info", "key": "trust_name", "label": "Trust"},
+    {"group": "School info", "key": "number_on_roll", "label": "NOR", "rank": True},
+    {"group": "School info", "key": "ks4_pupils", "label": "KS4 pupils", "rank": True, "defaultOn": True},
+    {"group": "Demographics", "key": "pct_fsm_ever", "label": "% FSM", "fmt": "pct", "rank": True, "defaultOn": True},
+    {"group": "Demographics", "key": "pct_eal", "label": "% EAL", "fmt": "pct", "rank": True, "defaultOn": True},
+    {"group": "Demographics", "key": "pct_sen", "label": "% SEN", "fmt": "pct", "rank": True, "defaultOn": True},
+    {"group": "Demographics", "key": "pct_sen_support", "label": "% SEN sup", "fmt": "pct", "rank": True, "defaultOn": True},
+    {"group": "Demographics", "key": "pct_sen_ehcp", "label": "% EHCP", "fmt": "pct", "rank": True, "defaultOn": True},
+    {"group": "Attainment 8", "key": "att8", "label": "Att 8", "rank": True, "defaultOn": True},
+    {"group": "Attainment 8", "key": "att8_english", "label": "Att 8 Eng", "rank": True, "defaultOn": True},
+    {"group": "Attainment 8", "key": "att8_maths", "label": "Att 8 Mat", "rank": True, "defaultOn": True},
+    {"group": "Attainment 8", "key": "att8_ebacc", "label": "Att 8 EBac", "rank": True},
+    {"group": "Attainment 8", "key": "att8_open", "label": "Att 8 Open", "rank": True},
+    {"group": "Basics", "key": "pct_basics_94", "label": "% Bas 9-4", "fmt": "pct", "rank": True, "defaultOn": True},
+    {"group": "Basics", "key": "pct_basics_95", "label": "% Bas 9-5", "fmt": "pct", "rank": True, "defaultOn": True},
+    {"group": "EBacc", "key": "pct_ebacc_entry", "label": "% EBac ent", "fmt": "pct", "rank": True},
+    {"group": "EBacc", "key": "pct_ebacc_94", "label": "% EBac 9-4", "fmt": "pct", "rank": True},
+    {"group": "EBacc", "key": "pct_ebacc_95", "label": "% EBac 9-5", "fmt": "pct", "rank": True},
+    {"group": "Disadvantage", "key": "pct_fsm6cla1a", "label": "% disadv", "fmt": "pct", "rank": True},
+    {"group": "Disadvantage", "key": "att8_fsm", "label": "Att 8 (FSM)", "rank": True},
+    {"group": "Disadvantage", "key": "att8_not_fsm", "label": "Att 8 (non)", "rank": True},
+]
+
+KS4_DEFAULTS = {
+    "x": "pct_fsm_ever",
+    "y": "att8",
+    "hist": "pct_fsm_ever",
+}
+
+
+# ---------------------------------------------------------------------------
+# HTML generation
+# ---------------------------------------------------------------------------
+
+def build_grouped_options(field_groups, field_labels, default):
     html = ""
-    for group_name, fields in FIELD_GROUPS:
+    for group_name, fields in field_groups:
         html += f'<optgroup label="{group_name}">\n'
         for f in fields:
             selected = " selected" if f == default else ""
-            html += f'<option value="{f}"{selected}>{FIELD_LABELS[f]}</option>\n'
+            html += f'<option value="{f}"{selected}>{field_labels[f]}</option>\n'
         html += "</optgroup>\n"
     return html
 
 
-def build_html(filter_options):
-    x_options = build_grouped_options("pct_fsm_ever")
-    y_options = build_grouped_options("pct_rwm_expected")
-    hist_options = build_grouped_options("pct_fsm_ever")
+def build_html(*, title, subtitle, help_html, field_labels, demographic_fields,
+               field_groups, defaults, filter_options, table_columns, data_url, nav_html):
+    x_options = build_grouped_options(field_groups, field_labels, defaults["x"])
+    y_options = build_grouped_options(field_groups, field_labels, defaults["y"])
+    hist_options = build_grouped_options(field_groups, field_labels, defaults["hist"])
 
     return f"""<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Primary School Performance and Demographics Dashboard 2024-25</title>
-    <link rel="stylesheet" href="style.css">
+    <title>{title}</title>
+    <link rel="stylesheet" href="../style.css">
     <script defer data-domain="inglesp.github.io" src="https://plausible.io/js/script.js"></script>
 </head>
 <body>
-    <h1>Primary School Performance and Demographics 2024-25 <button id="help-btn" class="help-btn" aria-label="Help">?</button></h1>
+    <h1>{title} <button id="help-btn" class="help-btn" aria-label="Help">?</button></h1>
 
-    <p class="subtitle">Data from the DfE's <a href="https://www.compare-school-performance.service.gov.uk/" target="_blank" rel="noopener">compare school performance</a> service for 2024-25. Covers state-funded primary schools in England with KS2 results.</p>
+    <p class="subtitle">{subtitle}</p>
+
+    <nav class="page-nav">{nav_html}</nav>
 
     <div id="help-modal" class="modal-overlay">
         <div class="modal">
@@ -291,54 +421,7 @@ def build_html(filter_options):
                 <button id="help-close" class="modal-close" aria-label="Close">&times;</button>
             </div>
             <div class="modal-body">
-                <h3>Demographics</h3>
-                <dl>
-                    <dt>% FSM ever</dt>
-                    <dd>Percentage of pupils who have ever been eligible for free school meals (from school census).</dd>
-                    <dt>% EAL</dt>
-                    <dd>Percentage of pupils with English as an additional language.</dd>
-                    <dt>% SEN (total)</dt>
-                    <dd>Percentage of pupils with special educational needs (SEN support + EHCP combined).</dd>
-                    <dt>% SEN support</dt>
-                    <dd>Percentage of pupils receiving SEN support (the lower tier, without an EHCP).</dd>
-                    <dt>% SEN EHCP</dt>
-                    <dd>Percentage of pupils with an Education, Health and Care Plan (the most significant needs).</dd>
-                    <dt>Number on roll</dt>
-                    <dd>Total number of pupils at the school (from school census).</dd>
-                    <dt>Eligible pupils (KS2)</dt>
-                    <dd>Number of pupils included in KS2 performance measures (typically Year 6).</dd>
-                </dl>
-
-                <h3>Attainment</h3>
-                <p>KS2 tests are taken at the end of Year 6 (age 10-11). "Expected standard" includes pupils
-                achieving both the expected and higher standard.</p>
-                <dl>
-                    <dt>% RWM expected / higher</dt>
-                    <dd>Percentage reaching the expected/higher standard in reading, writing, and maths combined.</dd>
-                    <dt>% reading expected / higher</dt>
-                    <dd>Percentage reaching the expected/higher standard in reading.</dd>
-                    <dt>% writing expected / higher</dt>
-                    <dd>Percentage reaching the expected/higher standard in writing (teacher assessed).</dd>
-                    <dt>% maths expected / higher</dt>
-                    <dd>Percentage reaching the expected/higher standard in maths.</dd>
-                    <dt>% GPS expected / higher</dt>
-                    <dd>Percentage reaching the expected/higher standard in grammar, punctuation, and spelling.</dd>
-                    <dt>Reading / Maths / GPS avg scaled score</dt>
-                    <dd>Average scaled score (out of 120, with 100 being the expected standard threshold).</dd>
-                </dl>
-
-                <h3>Disadvantage gap</h3>
-                <dl>
-                    <dt>% disadvantaged (KS2)</dt>
-                    <dd>Percentage of KS2 eligible pupils classified as disadvantaged (FSM in last 6 years or looked-after/previously looked-after children).</dd>
-                    <dt>% RWM expected (FSM) / (non-FSM)</dt>
-                    <dd>Percentage reaching expected standard in RWM, split by disadvantage status. The gap between these shows within-school inequality.</dd>
-                </dl>
-
-                <h3>Percentiles</h3>
-                <p>Percentiles show where a school sits relative to all others. p0 = lowest, p100 = highest.
-                Both national and LA percentiles are shown. For all fields, a higher percentile means a
-                higher value (e.g. p90 for % FSM means higher deprivation than 90% of schools).</p>
+                {help_html}
             </div>
         </div>
     </div>
@@ -407,38 +490,223 @@ def build_html(filter_options):
     <div id="selected-table-container" class="selected-table-container"></div>
 
     <script>
-        var FIELD_LABELS = {json.dumps(FIELD_LABELS)};
-        var DEMOGRAPHIC_FIELDS = {json.dumps(DEMOGRAPHIC_FIELDS)};
+        var FIELD_LABELS = {json.dumps(field_labels)};
+        var DEMOGRAPHIC_FIELDS = {json.dumps(demographic_fields)};
         var FILTER_OPTIONS = {json.dumps(filter_options)};
-        var DATA_URL = "data.json";
+        var TABLE_COLUMNS = {json.dumps(table_columns)};
+        var DATA_URL = "{data_url}";
     </script>
-    <script src="dashboard.js"></script>
+    <script src="../dashboard.js"></script>
 </body>
 </html>
 """
 
 
-def main():
-    SITE_DIR.mkdir(exist_ok=True)
+KS2_HELP = """\
+<h3>Demographics</h3>
+<dl>
+    <dt>% FSM ever</dt>
+    <dd>Percentage of pupils who have ever been eligible for free school meals (from school census).</dd>
+    <dt>% EAL</dt>
+    <dd>Percentage of pupils with English as an additional language.</dd>
+    <dt>% SEN (total)</dt>
+    <dd>Percentage of pupils with special educational needs (SEN support + EHCP combined).</dd>
+    <dt>% SEN support</dt>
+    <dd>Percentage of pupils receiving SEN support (the lower tier, without an EHCP).</dd>
+    <dt>% SEN EHCP</dt>
+    <dd>Percentage of pupils with an Education, Health and Care Plan (the most significant needs).</dd>
+    <dt>Number on roll</dt>
+    <dd>Total number of pupils at the school (from school census).</dd>
+    <dt>Eligible pupils (KS2)</dt>
+    <dd>Number of pupils included in KS2 performance measures (typically Year 6).</dd>
+</dl>
 
-    schools = build_data()
+<h3>Attainment</h3>
+<p>KS2 tests are taken at the end of Year 6 (age 10-11). "Expected standard" includes pupils
+achieving both the expected and higher standard.</p>
+<dl>
+    <dt>% RWM expected / higher</dt>
+    <dd>Percentage reaching the expected/higher standard in reading, writing, and maths combined.</dd>
+    <dt>% reading expected / higher</dt>
+    <dd>Percentage reaching the expected/higher standard in reading.</dd>
+    <dt>% writing expected / higher</dt>
+    <dd>Percentage reaching the expected/higher standard in writing (teacher assessed).</dd>
+    <dt>% maths expected / higher</dt>
+    <dd>Percentage reaching the expected/higher standard in maths.</dd>
+    <dt>% GPS expected / higher</dt>
+    <dd>Percentage reaching the expected/higher standard in grammar, punctuation, and spelling.</dd>
+    <dt>Reading / Maths / GPS avg scaled score</dt>
+    <dd>Average scaled score (out of 120, with 100 being the expected standard threshold).</dd>
+</dl>
+
+<h3>Disadvantage gap</h3>
+<dl>
+    <dt>% disadvantaged (KS2)</dt>
+    <dd>Percentage of KS2 eligible pupils classified as disadvantaged (FSM in last 6 years or looked-after/previously looked-after children).</dd>
+    <dt>% RWM expected (FSM) / (non-FSM)</dt>
+    <dd>Percentage reaching expected standard in RWM, split by disadvantage status.</dd>
+</dl>
+
+<h3>Percentiles</h3>
+<p>Percentiles show where a school sits relative to all others. p0 = lowest, p100 = highest.
+Both national and LA percentiles are shown. For all fields, a higher percentile means a
+higher value (e.g. p90 for % FSM means higher deprivation than 90% of schools).</p>
+"""
+
+KS4_HELP = """\
+<h3>Demographics</h3>
+<dl>
+    <dt>% FSM ever</dt>
+    <dd>Percentage of pupils who have ever been eligible for free school meals (from school census).</dd>
+    <dt>% EAL</dt>
+    <dd>Percentage of pupils with English as an additional language.</dd>
+    <dt>% SEN (total)</dt>
+    <dd>Percentage of pupils with special educational needs (SEN support + EHCP combined).</dd>
+    <dt>% SEN support</dt>
+    <dd>Percentage of pupils receiving SEN support (the lower tier, without an EHCP).</dd>
+    <dt>% SEN EHCP</dt>
+    <dd>Percentage of pupils with an Education, Health and Care Plan (the most significant needs).</dd>
+    <dt>Number on roll</dt>
+    <dd>Total number of pupils at the school (from school census).</dd>
+    <dt>KS4 pupils</dt>
+    <dd>Number of pupils at the end of Key Stage 4 included in performance measures.</dd>
+</dl>
+
+<h3>Attainment 8</h3>
+<p>Attainment 8 measures achievement across 8 qualifications. The overall score is the sum of
+English (double weighted), Maths (double weighted), 3 EBacc subjects, and 3 open subjects.</p>
+<dl>
+    <dt>Attainment 8</dt>
+    <dd>Average Attainment 8 score per pupil (max ~90, typical range 30-60).</dd>
+    <dt>Attainment 8 English / Maths / EBacc / Open</dt>
+    <dd>Average score for each Attainment 8 element.</dd>
+</dl>
+
+<h3>Basics & EBacc</h3>
+<dl>
+    <dt>% Basics 9-4 (standard pass)</dt>
+    <dd>Percentage achieving grade 4+ in both English and Maths GCSE.</dd>
+    <dt>% Basics 9-5 (strong pass)</dt>
+    <dd>Percentage achieving grade 5+ in both English and Maths GCSE.</dd>
+    <dt>% entering EBacc</dt>
+    <dd>Percentage entered for the English Baccalaureate (English, Maths, Sciences, a language, and History or Geography).</dd>
+    <dt>% EBacc 9-4 / 9-5</dt>
+    <dd>Percentage achieving the EBacc at grade 4+/5+ in all EBacc subjects.</dd>
+</dl>
+
+<h3>Disadvantage gap</h3>
+<dl>
+    <dt>% disadvantaged (KS4)</dt>
+    <dd>Percentage of KS4 pupils classified as disadvantaged.</dd>
+    <dt>Attainment 8 (FSM) / (non-FSM)</dt>
+    <dd>Average Attainment 8 score split by disadvantage status.</dd>
+</dl>
+
+<h3>Percentiles</h3>
+<p>Percentiles show where a school sits relative to all others. p0 = lowest, p100 = highest.
+Both national and LA percentiles are shown.</p>
+"""
+
+
+# ---------------------------------------------------------------------------
+# Main
+# ---------------------------------------------------------------------------
+
+def build_page(*, out_dir, schools, field_labels, demographic_fields,
+               field_groups, defaults, table_columns, title, subtitle, help_html, nav_html):
+    """Build one dashboard page (HTML + data.json) in out_dir."""
+    out_dir.mkdir(parents=True, exist_ok=True)
     filter_options = build_filter_options(schools)
 
-    data_path = SITE_DIR / "data.json"
+    data_path = out_dir / "data.json"
     print(f"Writing {data_path} ...")
     with open(data_path, "w") as f:
         json.dump(schools, f, indent=2)
     print(f"  {data_path.stat().st_size / 1024 / 1024:.1f} MB")
 
-    html_path = SITE_DIR / "index.html"
+    html_path = out_dir / "index.html"
     print(f"Writing {html_path} ...")
     with open(html_path, "w") as f:
-        f.write(build_html(filter_options))
+        f.write(build_html(
+            title=title,
+            subtitle=subtitle,
+            help_html=help_html,
+            field_labels=field_labels,
+            demographic_fields=demographic_fields,
+            field_groups=field_groups,
+            defaults=defaults,
+            filter_options=filter_options,
+            table_columns=table_columns,
+            data_url="data.json",
+            nav_html=nav_html,
+        ))
 
-    # Copy static assets
+
+def main():
+    SITE_DIR.mkdir(exist_ok=True)
+
+    print("Loading CSVs...")
+    gias_trusts = load_gias_trusts()
+
+    # --- KS2 ---
+    print("\n--- KS2 (Primary) ---")
+    ks2_school_info = load_school_info(phase_key="ISPRIMARY", minor_groups=("Maintained school", "Academy"))
+    ks2_census = load_census(school_type_prefix="State-funded primary")
+    ks2 = load_ks2()
+    print(f"  School info: {len(ks2_school_info)}")
+    print(f"  Census: {len(ks2_census)}")
+    print(f"  KS2: {len(ks2)}")
+    print(f"  GIAS trusts: {len(gias_trusts)}")
+    ks2_schools = build_data(ks2_school_info, ks2_census, ks2, gias_trusts)
+
+    nav_html = '<strong>KS2</strong> · <a href="../ks4/">KS4</a>'
+    build_page(
+        out_dir=SITE_DIR / "ks2",
+        schools=ks2_schools,
+        field_labels=KS2_FIELD_LABELS,
+        demographic_fields=KS2_DEMOGRAPHIC_FIELDS,
+        field_groups=KS2_FIELD_GROUPS,
+        defaults=KS2_DEFAULTS,
+        table_columns=KS2_TABLE_COLUMNS,
+        title="Primary School Performance and Demographics 2024-25",
+        subtitle='Data from the DfE\'s <a href="https://www.compare-school-performance.service.gov.uk/" target="_blank" rel="noopener">compare school performance</a> service for 2024-25. Covers state-funded primary schools in England with KS2 results.',
+        help_html=KS2_HELP,
+        nav_html=nav_html,
+    )
+
+    # --- KS4 ---
+    print("\n--- KS4 (Secondary) ---")
+    ks4_school_info = load_school_info(phase_key="ISSECONDARY", minor_groups=("Maintained school", "Academy"))
+    ks4_census = load_census(school_type_prefix="State-funded secondary")
+    ks4 = load_ks4()
+    print(f"  School info: {len(ks4_school_info)}")
+    print(f"  Census: {len(ks4_census)}")
+    print(f"  KS4: {len(ks4)}")
+    ks4_schools = build_data(ks4_school_info, ks4_census, ks4, gias_trusts)
+
+    nav_html = '<a href="../ks2/">KS2</a> · <strong>KS4</strong>'
+    build_page(
+        out_dir=SITE_DIR / "ks4",
+        schools=ks4_schools,
+        field_labels=KS4_FIELD_LABELS,
+        demographic_fields=KS4_DEMOGRAPHIC_FIELDS,
+        field_groups=KS4_FIELD_GROUPS,
+        defaults=KS4_DEFAULTS,
+        table_columns=KS4_TABLE_COLUMNS,
+        title="Secondary School Performance and Demographics 2024-25",
+        subtitle='Data from the DfE\'s <a href="https://www.compare-school-performance.service.gov.uk/" target="_blank" rel="noopener">compare school performance</a> service for 2024-25. Covers state-funded secondary schools in England with KS4 results.',
+        help_html=KS4_HELP,
+        nav_html=nav_html,
+    )
+
+    # --- Root redirect ---
+    with open(SITE_DIR / "index.html", "w") as f:
+        f.write('<!DOCTYPE html><html><head><meta http-equiv="refresh" content="0;url=ks2/"></head></html>\n')
+
+    # Copy static assets to site root
     shutil.copy(STATIC_DIR / "dashboard.js", SITE_DIR / "dashboard.js")
     shutil.copy(STATIC_DIR / "style.css", SITE_DIR / "style.css")
-    print("Copied dashboard.js and style.css")
+    print("\nCopied dashboard.js and style.css")
 
     print("Done! Serve with: python -m http.server -d _site")
 

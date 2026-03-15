@@ -16,8 +16,17 @@ h1 {
     font-size: 1.4rem;
 }
 
-.subtitle {
+.page-nav {
     margin-bottom: 1rem;
+    font-size: 0.9rem;
+}
+
+.page-nav a {
+    color: #2166ac;
+}
+
+.subtitle {
+    margin-bottom: 0.5rem;
     font-size: 0.9rem;
     color: #555;
 }

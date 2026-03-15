@@ -12,35 +12,7 @@
         "#d4a017", "#2166ac", "#b2182b", "#35978f",
     ];
 
-    var TABLE_COLUMNS = [
-        { group: "School info", key: "la_name", label: "LA" },
-        { group: "School info", key: "school_type", label: "Type" },
-        { group: "School info", key: "religious_character", label: "Religion" },
-        { group: "School info", key: "trust_name", label: "Trust" },
-        { group: "School info", key: "number_on_roll", label: "NOR", rank: true },
-        { group: "School info", key: "eligible_pupils", label: "KS2 pupils", rank: true, defaultOn: true },
-        { group: "Demographics", key: "pct_fsm_ever", label: "% FSM", fmt: "pct", rank: true, defaultOn: true },
-        { group: "Demographics", key: "pct_eal", label: "% EAL", fmt: "pct", rank: true, defaultOn: true },
-        { group: "Demographics", key: "pct_sen", label: "% SEN", fmt: "pct", rank: true, defaultOn: true },
-        { group: "Demographics", key: "pct_sen_support", label: "% SEN sup", fmt: "pct", rank: true, defaultOn: true },
-        { group: "Demographics", key: "pct_sen_ehcp", label: "% EHCP", fmt: "pct", rank: true, defaultOn: true },
-        { group: "Attainment (expected)", key: "pct_rwm_expected", label: "% RWM exp", fmt: "pct", rank: true, defaultOn: true },
-        { group: "Attainment (expected)", key: "pct_reading_expected", label: "% read exp", fmt: "pct", rank: true, defaultOn: true },
-        { group: "Attainment (expected)", key: "pct_writing_expected", label: "% write exp", fmt: "pct", rank: true, defaultOn: true },
-        { group: "Attainment (expected)", key: "pct_maths_expected", label: "% maths exp", fmt: "pct", rank: true, defaultOn: true },
-        { group: "Attainment (expected)", key: "pct_gps_expected", label: "% GPS exp", fmt: "pct", rank: true, defaultOn: true },
-        { group: "Attainment (higher)", key: "pct_rwm_higher", label: "% RWM high", fmt: "pct", rank: true },
-        { group: "Attainment (higher)", key: "pct_reading_higher", label: "% read high", fmt: "pct", rank: true },
-        { group: "Attainment (higher)", key: "pct_writing_higher", label: "% write high", fmt: "pct", rank: true },
-        { group: "Attainment (higher)", key: "pct_maths_higher", label: "% maths high", fmt: "pct", rank: true },
-        { group: "Attainment (higher)", key: "pct_gps_higher", label: "% GPS high", fmt: "pct", rank: true },
-        { group: "Scaled scores", key: "reading_average", label: "Read avg", rank: true },
-        { group: "Scaled scores", key: "maths_average", label: "Maths avg", rank: true },
-        { group: "Scaled scores", key: "gps_average", label: "GPS avg", rank: true },
-        { group: "Disadvantage", key: "pct_fsm6cla1a", label: "% disadv", fmt: "pct", rank: true },
-        { group: "Disadvantage", key: "pct_rwm_exp_fsm", label: "% RWM (FSM)", fmt: "pct", rank: true },
-        { group: "Disadvantage", key: "pct_rwm_exp_not_fsm", label: "% RWM (non)", fmt: "pct", rank: true },
-    ];
+    // TABLE_COLUMNS is set via a <script> tag in the HTML
 
     var visibleColumns = new Set();
     TABLE_COLUMNS.forEach(function (col) {
