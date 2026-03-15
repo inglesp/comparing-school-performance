@@ -13,6 +13,11 @@ Live site: https://inglesp.github.io/comparing-school-performance/
 - Sortable comparison table with configurable columns
 - Shareable URLs preserving all state
 
+## Data sources
+
+- **DfE performance data** — downloaded from [compare school performance](https://www.compare-school-performance.service.gov.uk/), stored in `data/2024-25/`
+- **GIAS** — downloaded from [Get Information About Schools](https://get-information-schools.service.gov.uk/Downloads), stored in `data/gias/`
+
 ## Development
 
 Requires [uv](https://docs.astral.sh/uv/) and [just](https://github.com/casey/just).
@@ -20,4 +25,10 @@ Requires [uv](https://docs.astral.sh/uv/) and [just](https://github.com/casey/ju
 ```
 just build   # build the static site to _site/
 just serve   # serve locally
+```
+
+## Reports
+
+```
+uv run python scripts/report_gias.py   # generate reports/gias.html
 ```

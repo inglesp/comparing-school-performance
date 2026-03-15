@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>GIAS Data Report</title>
+<style>
+body { font-family: -apple-system, sans-serif; max-width: 960px; margin: 2rem auto; padding: 0 1rem; color: #333; }
+h1 { border-bottom: 2px solid #333; padding-bottom: 0.5rem; }
+h2 { margin-top: 2rem; color: #2166ac; }
+h3 { margin-top: 1rem; color: #555; }
+table { border-collapse: collapse; margin: 0.5rem 0 1rem; }
+th, td { border: 1px solid #ddd; padding: 0.3rem 0.6rem; text-align: left; font-size: 0.85rem; }
+th { background: #f5f5f5; }
+tr:nth-child(even) td { background: #fafafa; }
+code { background: #eee; padding: 0.1rem 0.3rem; border-radius: 2px; }
+</style>
+</head>
+<body>
+<h1>GIAS Data Report</h1>
+<p>Data from <code>data/gias/20260312</code></p>
+<h2>Files</h2>
+
+        <p>18 CSV files in <code>data/gias/20260312</code></p>
+        <table><thead><tr><th>File</th><th>Rows</th><th>Columns</th><th>First columns</th></tr></thead><tbody><tr><td>academiesmatmembership20260312.csv</td><td>15528</td><td>54</td><td>URN, DfE Number, EstablishmentNumber, Establishment UKPRN, LA (code), LA (name), Group UID, Group ID...</td></tr><tr><td>allgroupsdata20260312.csv</td><td>7166</td><td>21</td><td>Group UID, Group ID, Group Name, Companies House Number, Group Type (code), Group Type, Closed Date, Open date...</td></tr><tr><td>alllinksdata20260312.csv</td><td>24244</td><td>20</td><td>URN, Group UID, Group ID, Group Name, Companies House Number, Group Type (code), Group Type, Closed Date...</td></tr><tr><td>edubaseallacademiesandfree20260312.csv</td><td>11904</td><td>34</td><td>URN, LA (code), LA (name), EstablishmentNumber, EstablishmentName, TypeOfEstablishment (name), EstablishmentStatus (name), ReasonEstablishmentOpened (name)...</td></tr><tr><td>edubaseallchildrencentre20260312.csv</td><td>2847</td><td>22</td><td>URN, LA (code), LA (name), EstablishmentName, TypeOfEstablishment (code), TypeOfEstablishment (name), EstablishmentStatus (code), EstablishmentStatus (name)...</td></tr><tr><td>edubasealldata20260312.csv</td><td>52278</td><td>135</td><td>URN, LA (code), LA (name), EstablishmentNumber, EstablishmentName, TypeOfEstablishment (code), TypeOfEstablishment (name), EstablishmentTypeGroup (code)...</td></tr><tr><td>edubaseallstatefunded20260312.csv</td><td>21991</td><td>33</td><td>URN, LA (code), LA (name), EstablishmentNumber, EstablishmentName, TypeOfEstablishment (name), EstablishmentStatus (name), ReasonEstablishmentOpened (name)...</td></tr><tr><td>governanceacaddata20260312.csv</td><td>122247</td><td>14</td><td>GID, URN, UID, Companies House Number, Role, Title, Forename 1, Forename 2...</td></tr><tr><td>governancealldata20260312.csv</td><td>268256</td><td>14</td><td>GID, URN, UID, Companies House Number, Role, Title, Forename 1, Forename 2...</td></tr><tr><td>governanceladata20260312.csv</td><td>117665</td><td>14</td><td>GID, URN, UID, Companies House Number, Role, Title, Forename 1, Forename 2...</td></tr><tr><td>governancematdata20260312.csv</td><td>28344</td><td>14</td><td>GID, URN, UID, Companies House Number, Role, Title, Forename 1, Forename 2...</td></tr><tr><td>grouplinks_edubaseallacademiesandfree20260312.csv</td><td>21068</td><td>21</td><td>URN, Linked UID, Group Name, Companies House Number, Group Type, Group Type (code), Closed Date, Open date...</td></tr><tr><td>groups.csv</td><td>7166</td><td>21</td><td>Group UID, Group ID, Group Name, Companies House Number, Group Type (code), Group Type, Closed Date, Open date...</td></tr><tr><td>links.csv</td><td>24244</td><td>20</td><td>URN, Group UID, Group ID, Group Name, Companies House Number, Group Type (code), Group Type, Closed Date...</td></tr><tr><td>links_edubaseallacademiesandfree20260312.csv</td><td>11269</td><td>5</td><td>URN, LinkURN, LinkName, LinkType, LinkEstablishedDate</td></tr><tr><td>links_edubaseallchildrencentre20260312.csv</td><td>1301</td><td>5</td><td>URN, LinkURN, LinkName, LinkType, LinkEstablishedDate</td></tr><tr><td>links_edubasealldata20260312.csv</td><td>34907</td><td>5</td><td>URN, LinkURN, LinkName, LinkType, LinkEstablishedDate</td></tr><tr><td>links_edubaseallstatefunded20260312.csv</td><td>13570</td><td>5</td><td>URN, LinkURN, LinkName, LinkType, LinkEstablishedDate</td></tr></tbody></table>
+    
+
+<h2>Establishment data (edubasealldata)</h2>
+<p>52278 rows</p>
+
+<h2>Establishment status</h2>
+<table><thead><tr><th>Status</th><th>Count</th></tr></thead><tbody><tr><td>Open</td><td>27183</td></tr><tr><td>Closed</td><td>25046</td></tr><tr><td>Open, but proposed to close</td><td>28</td></tr><tr><td>Proposed to open</td><td>21</td></tr></tbody></table>
+
+<h2>Establishment type groups</h2>
+<table><thead><tr><th>Type group</th><th>Count</th></tr></thead><tbody><tr><td>Local authority maintained schools</td><td>28372</td></tr><tr><td>Academies</td><td>11660</td></tr><tr><td>Independent schools</td><td>3857</td></tr><tr><td>Special schools</td><td>3259</td></tr><tr><td>Welsh schools</td><td>2485</td></tr><tr><td>Other types</td><td>1006</td></tr><tr><td>Free Schools</td><td>939</td></tr><tr><td>Colleges</td><td>550</td></tr><tr><td>Universities</td><td>138</td></tr><tr><td>Online provider</td><td>12</td></tr></tbody></table>
+
+<h2>Phase of education (open establishments)</h2>
+<table><thead><tr><th>Phase</th><th>Count</th></tr></thead><tbody><tr><td>Primary</td><td>16693</td></tr><tr><td>Not applicable</td><td>6394</td></tr><tr><td>Secondary</td><td>3173</td></tr><tr><td>Nursery</td><td>375</td></tr><tr><td>16 plus</td><td>293</td></tr><tr><td>All-through</td><td>166</td></tr><tr><td>Middle deemed secondary</td><td>85</td></tr><tr><td>Middle deemed primary</td><td>4</td></tr></tbody></table>
+
+<h2>Type of establishment (open)</h2>
+<table><thead><tr><th>Type</th><th>Count</th></tr></thead><tbody><tr><td>Academy converter</td><td>7782</td></tr><tr><td>Community school</td><td>5021</td></tr><tr><td>Academy sponsor led</td><td>2673</td></tr><tr><td>Voluntary aided school</td><td>2072</td></tr><tr><td>Other independent school</td><td>1608</td></tr><tr><td>Welsh establishment</td><td>1567</td></tr><tr><td>Voluntary controlled school</td><td>1370</td></tr><tr><td>Other independent special school</td><td>905</td></tr><tr><td>Foundation school</td><td>584</td></tr><tr><td>Free schools</td><td>545</td></tr><tr><td>Community special school</td><td>422</td></tr><tr><td>Local authority nursery school</td><td>375</td></tr><tr><td>Academy special converter</td><td>339</td></tr><tr><td>British schools overseas</td><td>323</td></tr><tr><td>Further education</td><td>211</td></tr><tr><td>Special post 16 institution</td><td>151</td></tr><tr><td>Pupil referral unit</td><td>148</td></tr><tr><td>Free schools special</td><td>134</td></tr><tr><td>Higher education institutions</td><td>128</td></tr><tr><td>Offshore schools</td><td>123</td></tr><tr><td>Academy special sponsor led</td><td>98</td></tr><tr><td>Academy alternative provision converter</td><td>95</td></tr><tr><td>Foundation special school</td><td>75</td></tr><tr><td>Miscellaneous</td><td>75</td></tr><tr><td>Free schools alternative provision</td><td>53</td></tr><tr><td>Non-maintained special school</td><td>52</td></tr><tr><td>University technical college</td><td>44</td></tr><tr><td>Academy 16-19 converter</td><td>42</td></tr><tr><td>Free schools 16 to 19</td><td>36</td></tr><tr><td>Academy alternative provision sponsor led</td><td>36</td></tr><tr><td>...</td><td>8 more</td></tr></tbody></table>
+
+<h2>Trust school flag (open)</h2>
+<table><thead><tr><th>Flag</th><th>Count</th></tr></thead><tbody><tr><td>Not applicable</td><td>14626</td></tr><tr><td>Supported by a multi-academy trust</td><td>11076</td></tr><tr><td>Supported by a single-academy trust</td><td>822</td></tr><tr><td>Supported by a trust</td><td>333</td></tr><tr><td>Not supported by a trust</td><td>326</td></tr></tbody></table>
+
+<h2>Trust membership (open)</h2>
+
+        <p>With trust name: 12232</p>
+        <p>Without trust name: 14951</p>
+    
+
+<h2>Largest trusts (by school count)</h2>
+<table><thead><tr><th>Trust</th><th>Schools</th></tr></thead><tbody><tr><td>UNITED LEARNING TRUST</td><td>96</td></tr><tr><td>REACH2 ACADEMY TRUST</td><td>65</td></tr><tr><td>DELTA ACADEMIES TRUST</td><td>64</td></tr><tr><td>ST GABRIEL THE ARCHANGEL CATHOLIC MULTI-ACADEMY TRUST</td><td>63</td></tr><tr><td>LIFT SCHOOLS</td><td>58</td></tr><tr><td>HARRIS FEDERATION</td><td>55</td></tr><tr><td>OASIS COMMUNITY LEARNING</td><td>55</td></tr><tr><td>BISHOP WILKINSON CATHOLIC EDUCATION TRUST</td><td>47</td></tr><tr><td>THE BATH AND WELLS DIOCESAN ACADEMIES TRUST</td><td>46</td></tr><tr><td>ORMISTON ACADEMIES TRUST</td><td>45</td></tr><tr><td>THE KEMNAL ACADEMIES TRUST</td><td>45</td></tr><tr><td>GLF SCHOOLS</td><td>43</td></tr><tr><td>OXFORD DIOCESAN SCHOOLS TRUST</td><td>43</td></tr><tr><td>THE DIOCESE OF NORWICH EDUCATION AND ACADEMIES TRUST</td><td>41</td></tr><tr><td>TRURO &amp; PENWITH ACADEMY TRUST</td><td>41</td></tr><tr><td>OUTWOOD GRANGE ACADEMIES TRUST</td><td>40</td></tr><tr><td>UNITY SCHOOLS PARTNERSHIP</td><td>40</td></tr><tr><td>ARK SCHOOLS</td><td>39</td></tr><tr><td>BISHOP BEWICK CATHOLIC EDUCATION TRUST</td><td>39</td></tr><tr><td>GREENWOOD ACADEMIES TRUST</td><td>38</td></tr><tr><td>THE CO-OPERATIVE ACADEMIES TRUST</td><td>38</td></tr><tr><td>MIDSOMER NORTON SCHOOLS PARTNERSHIP</td><td>38</td></tr><tr><td>FLYING HIGH TRUST</td><td>38</td></tr><tr><td>THE DIOCESE OF ELY MULTI-ACADEMY TRUST</td><td>38</td></tr><tr><td>NICHOLAS POSTGATE CATHOLIC ACADEMY TRUST</td><td>38</td></tr><tr><td>E-ACT</td><td>37</td></tr><tr><td>ASPIRE ACADEMY TRUST</td><td>37</td></tr><tr><td>GREENSHAW LEARNING TRUST</td><td>37</td></tr><tr><td>HAMWIC EDUCATION TRUST</td><td>37</td></tr><tr><td>THE DAVID ROSS EDUCATION TRUST</td><td>36</td></tr><tr><td>...</td><td>2168 more</td></tr></tbody></table>
+
+<h2>Groups data (groups.csv)</h2>
+
+        <p>7166 groups</p>
+        <h3>Group types</h3>
+        <table><thead><tr><th>Type</th><th>Count</th></tr></thead><tbody><tr><td>Single-academy trust</td><td>1917</td></tr><tr><td>Multi-academy trust</td><td>1762</td></tr><tr><td>School sponsor</td><td>1237</td></tr><tr><td>Federation</td><td>1101</td></tr><tr><td>Children's Centres Group</td><td>579</td></tr><tr><td>Trust</td><td>475</td></tr><tr><td>Children's Centres Collaboration</td><td>74</td></tr><tr><td>Umbrella trust</td><td>20</td></tr><tr><td>Secure single-academy trust</td><td>1</td></tr></tbody></table>
+        <h3>Group status</h3>
+        <table><thead><tr><th>Status</th><th>Count</th></tr></thead><tbody><tr><td>Open</td><td>5032</td></tr><tr><td>Closed</td><td>2134</td></tr></tbody></table>
+    
+
+<h2>Group links (academy trust → school)</h2>
+
+        <p>21068 links</p>
+        <h3>By group type</h3>
+        <table><thead><tr><th>Type</th><th>Count</th></tr></thead><tbody><tr><td>Multi-academy trust</td><td>11078</td></tr><tr><td>School sponsor</td><td>9164</td></tr><tr><td>Single-academy trust</td><td>826</td></tr></tbody></table>
+    
+
+</body>
+</html>

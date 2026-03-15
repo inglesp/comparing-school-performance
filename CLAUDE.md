@@ -15,6 +15,7 @@ Dashboard for exploring primary school performance and demographic data in Engla
 ## Key files
 
 - `scripts/build.py` — reads DfE CSVs from `data/2024-25/`, merges school info + census + KS2 data, generates `_site/` (HTML, JSON, JS, CSS)
+- `scripts/report_gias.py` — generates `reports/gias.html` summarising the GIAS data
 - `static/dashboard.js` — all frontend logic: histogram, scatterplot, filters, search, table, URL state sync
 - `static/style.css` — all styling
 - `justfile` — `just build` and `just serve`
@@ -29,6 +30,8 @@ Dashboard for exploring primary school performance and demographic data in Engla
 
 - Source CSVs from DfE's compare school performance service (must be downloaded manually — direct fetch returns 403)
 - CSVs in `data/2024-25/`: `england_school_information.csv`, `england_ks2revised.csv`, `england_census.csv`
+- GIAS data in `data/gias/20260312/` — downloaded from Get Information About Schools; `edubasealldata` is cp1252 encoded, others are ASCII/UTF-8
+- GIAS `Trusts (name)` field provides trust/MAT membership per school (matched by URN)
 - Suppressed values in CSVs: `SUPP`, `NE`, `NA`, `NP`, `NEW`, `LOW`, `DNS` — treated as null
 - Percentages stored as strings like `"39%"` — parsed by `parse_pct()`
 - Progress scores are entirely empty for 2024-25
