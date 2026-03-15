@@ -312,7 +312,6 @@ KS2_FIELD_LABELS = {
     "pct_fsm_ever": "% FSM ever",
     "pct_eal": "% EAL",
     "pct_sen": "% SEN (total)",
-    "pct_sen_support": "% SEN support",
     "pct_sen_ehcp": "% SEN EHCP",
     "idaci_quintile": "IDACI quintile",
     "ofsted_overall": "Ofsted overall",
@@ -349,14 +348,14 @@ KS2_FIELD_LABELS = {
 }
 
 KS2_DEMOGRAPHIC_FIELDS = [
-    "pct_fsm_ever", "pct_eal", "pct_sen", "pct_sen_support", "pct_sen_ehcp",
+    "pct_fsm_ever", "pct_eal", "pct_sen", "pct_sen_ehcp",
     "number_on_roll", "eligible_pupils",
 ]
 
 KS2_FIELD_GROUPS = [
     ("School info", ["number_on_roll", "eligible_pupils"]),
     ("Demographics", [
-        "pct_fsm_ever", "pct_eal", "pct_sen", "pct_sen_support", "pct_sen_ehcp",
+        "pct_fsm_ever", "pct_eal", "pct_sen", "pct_sen_ehcp",
         "idaci_quintile",
     ]),
     ("Ofsted", [
@@ -391,7 +390,6 @@ KS2_TABLE_COLUMNS = [
     {"group": "Demographics", "key": "pct_fsm_ever", "label": "% FSM", "fmt": "pct", "rank": True, "defaultOn": True},
     {"group": "Demographics", "key": "pct_eal", "label": "% EAL", "fmt": "pct", "rank": True, "defaultOn": True},
     {"group": "Demographics", "key": "pct_sen", "label": "% SEN", "fmt": "pct", "rank": True, "defaultOn": True},
-    {"group": "Demographics", "key": "pct_sen_support", "label": "% SEN sup", "fmt": "pct", "rank": True, "defaultOn": True},
     {"group": "Demographics", "key": "pct_sen_ehcp", "label": "% EHCP", "fmt": "pct", "rank": True, "defaultOn": True},
     {"group": "Demographics", "key": "idaci_quintile", "label": "IDACI", "defaultOn": True},
     {"group": "Ofsted", "key": "ofsted_overall", "label": "Overall", "headerLabel": "Ofsted", "defaultOn": True},
@@ -442,7 +440,6 @@ KS4_FIELD_LABELS = {
     "pct_fsm_ever": "% FSM ever",
     "pct_eal": "% EAL",
     "pct_sen": "% SEN (total)",
-    "pct_sen_support": "% SEN support",
     "pct_sen_ehcp": "% SEN EHCP",
     "idaci_quintile": "IDACI quintile",
     "ofsted_overall": "Ofsted overall",
@@ -475,14 +472,14 @@ KS4_FIELD_LABELS = {
 }
 
 KS4_DEMOGRAPHIC_FIELDS = [
-    "pct_fsm_ever", "pct_eal", "pct_sen", "pct_sen_support", "pct_sen_ehcp",
+    "pct_fsm_ever", "pct_eal", "pct_sen", "pct_sen_ehcp",
     "number_on_roll", "ks4_pupils",
 ]
 
 KS4_FIELD_GROUPS = [
     ("School info", ["number_on_roll", "ks4_pupils"]),
     ("Demographics", [
-        "pct_fsm_ever", "pct_eal", "pct_sen", "pct_sen_support", "pct_sen_ehcp",
+        "pct_fsm_ever", "pct_eal", "pct_sen", "pct_sen_ehcp",
         "idaci_quintile",
     ]),
     ("Ofsted", [
@@ -513,7 +510,6 @@ KS4_TABLE_COLUMNS = [
     {"group": "Demographics", "key": "pct_fsm_ever", "label": "% FSM", "fmt": "pct", "rank": True, "defaultOn": True},
     {"group": "Demographics", "key": "pct_eal", "label": "% EAL", "fmt": "pct", "rank": True, "defaultOn": True},
     {"group": "Demographics", "key": "pct_sen", "label": "% SEN", "fmt": "pct", "rank": True, "defaultOn": True},
-    {"group": "Demographics", "key": "pct_sen_support", "label": "% SEN sup", "fmt": "pct", "rank": True, "defaultOn": True},
     {"group": "Demographics", "key": "pct_sen_ehcp", "label": "% EHCP", "fmt": "pct", "rank": True, "defaultOn": True},
     {"group": "Demographics", "key": "idaci_quintile", "label": "IDACI", "defaultOn": True},
     {"group": "Ofsted", "key": "ofsted_overall", "label": "Overall", "headerLabel": "Ofsted", "defaultOn": True},
@@ -686,9 +682,7 @@ KS2_HELP = """\
     <dt>% EAL</dt>
     <dd>Percentage of pupils with English as an additional language.</dd>
     <dt>% SEN (total)</dt>
-    <dd>Percentage of pupils with special educational needs (SEN support + EHCP combined).</dd>
-    <dt>% SEN support</dt>
-    <dd>Percentage of pupils receiving SEN support (the lower tier, without an EHCP).</dd>
+    <dd>Percentage of pupils with any special educational needs (SEN support or EHCP).</dd>
     <dt>% SEN EHCP</dt>
     <dd>Percentage of pupils with an Education, Health and Care Plan (the most significant needs).</dd>
     <dt>IDACI quintile</dt>
@@ -755,9 +749,7 @@ KS4_HELP = """\
     <dt>% EAL</dt>
     <dd>Percentage of pupils with English as an additional language.</dd>
     <dt>% SEN (total)</dt>
-    <dd>Percentage of pupils with special educational needs (SEN support + EHCP combined).</dd>
-    <dt>% SEN support</dt>
-    <dd>Percentage of pupils receiving SEN support (the lower tier, without an EHCP).</dd>
+    <dd>Percentage of pupils with any special educational needs (SEN support or EHCP).</dd>
     <dt>% SEN EHCP</dt>
     <dd>Percentage of pupils with an Education, Health and Care Plan (the most significant needs).</dd>
     <dt>IDACI quintile</dt>
