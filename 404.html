@@ -1,0 +1,10 @@
+<script>
+  const url = new URL(window.location.href);
+
+  url.pathname = url.pathname.replace(
+    "/comparing-school-performance",
+    "/explore-school-data"
+  );
+
+  window.location.replace(url.toString());
+</script>
